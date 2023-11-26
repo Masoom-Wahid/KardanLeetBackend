@@ -14,6 +14,8 @@ from django.core.files.base import ContentFile
 import os
 from django.conf import settings
 from .utils import create_folder_for_questions,delete_folder_for_contest
+from django.db.models import Q
+from rest_framework.status import *
 
 class QuestionViewSet(ModelViewSet):
     queryset = Contest_Question.objects.all()
@@ -24,16 +26,39 @@ class QuestionViewSet(ModelViewSet):
         else:
             permission_classes = [IsAuthenticated]
         return (permission() for permission in permission_classes)
+    
+    def list(self,request):
+        contest_name = request.GET.get("name",None)
+        if contest_name:
+            try:
+                contest = Contests.objects.get(name=contest_name)
+            except Contests.DoesNotExist:
+                return Response(
+                    {"detail":"Invalid Name"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            instance = Contest_Question.objects.filter(contest=contest)
+            serializer = ContestQuestionsSerializer(instance,many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail":"name required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
 
     def create(self,request,*args,**kwargs):
-        contest = request.data.get("contest",None)
+        contest = request.data.get("name",None)
         if not contest:
             return Response(
-                {"detail" :"contest requried"},
+                {"detail" :"name requried"},
                 status=status.HTTP_400_BAD_REQUEST
             )
         try:
-            contest_instance = Contests.objects.get(id=contest)
+            contest_instance = Contests.objects.get(name=contest)
         except Contests.DoesNotExist:
             return Response(
                 {"detail":"invalid Contest ID"},
