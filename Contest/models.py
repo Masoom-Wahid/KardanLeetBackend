@@ -8,6 +8,7 @@ QUESTION_LEVELS = [
 class Contests(models.Model):
     name = models.CharField(max_length=50,null=False,blank=False,unique=True)
     duration = models.DurationField()
+    started = models.BooleanField(default=False)
     starred = models.BooleanField(default=False)
 
     def __str__(self):
@@ -33,8 +34,8 @@ class Contest_Question(models.Model):
     title = models.CharField(max_length=40)
     lvl = models.CharField(max_length=20,choices=QUESTION_LEVELS)
     description = models.TextField()
-    
     num_of_test_cases = models.IntegerField()
+
     def __str__(self):
         return self.title
     

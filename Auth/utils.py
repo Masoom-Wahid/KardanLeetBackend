@@ -15,6 +15,8 @@ def generate_user_for_contest(amount,contest_name,contest):
             email = f"{user_name}@email.com",
             password =password
         )
+        instance.is_active = True
+        instance.save()
         Contest_Groups.objects.create(
             user = instance,
             group_name = f"contestant__{i}",

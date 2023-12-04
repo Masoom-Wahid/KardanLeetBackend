@@ -1,4 +1,4 @@
-from .models import Contestants,Contests,Contest_Groups
+from .models import Contestants,Contests,Contest_Groups,Contest_Question
 from rest_framework import serializers
 
 
@@ -11,6 +11,11 @@ class ContestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contests
         fields = ["id","name","duration","starred"]
+
+class ContestQuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Contest_Question
+        fields = ["id","title","lvl","description","num_of_test_cases"]
 
 class ContestantsSerializer(serializers.ModelSerializer):
     group = serializers.SerializerMethodField()

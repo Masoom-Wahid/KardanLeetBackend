@@ -3,7 +3,7 @@ from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth.models import User
 from .serializers import UserSerializer
 from Contest.serializers import ContestantsSerializer
-from rest_framework.permissions import IsAdminUser
+from .permissions import IsSuperUserOrIsStaffUser
 from rest_framework import status
 from Contest.models import Contests,Contest_Groups,Contestants
 from .utils import generate_user_for_contest
@@ -12,7 +12,7 @@ from rest_framework.decorators import action
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsSuperUserOrIsStaffUser]
 
     def create(self,request,*args,**kwargs):
         typeof = request.data.get("type",None)
@@ -43,10 +43,12 @@ class UserViewSet(ModelViewSet):
                     )
                 instance = User.objects.create(
                     username = user_name,
-                    email = f"{user_name}@email.com",
-                    password = password
+                    email = f"{user_name}@email.com"
                 )
                 instance.is_superuser = True
+                instance.is_staff = True
+                instance.is_active = True
+                instance.set_password(password)
                 instance.save()
                 serializer = UserSerializer(instance,many=False)
                 return Response(
