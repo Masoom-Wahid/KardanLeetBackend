@@ -3,12 +3,13 @@ import os
 from django.conf import settings
 import secrets
 from Contest.models import Contest_Question,Contests
-import multiprocessing
+import re
+import random, string
 
 
 
 class RunCode:
-    def __init__(self,question_name,contest_name,language,extensions,file,num_of_test_cases=20,last_solved=0):
+    def __init__(self,question_name,contest_name,language,extensions,file,num_of_test_cases=2,last_solved=0):
         self.last_solved = last_solved
         self.num_of_test_cases=num_of_test_cases
         self.contest_name = contest_name 
@@ -20,34 +21,27 @@ class RunCode:
     def deleteFile(self,filename):
         os.remove(os.path.join("/",filename))
     
-    def makeClass(self,filename):
-        print(filename)
-        subprocess.run(['javac', filename])
-        return filename
-    
 
-    def runJava(self,inputname,outputname,file):
-        # file = os.path.join(settings.BASE_DIR,"files","temp_files","Solution.class")
-        thisfile = '/home/masoom/Desktop/django/KardanLeet/files/temp_files/Solution'
-        TIMEOUT = 15
-        process = subprocess.Popen(['java', file], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-        with open(inputname, 'r') as input_file:
-            input_data = input_file.read().encode()
-        try:
-            output, _ = process.communicate(input_data,timeout=TIMEOUT)
-        except subprocess.TimeoutExpired:
-            process.kill()
-            return "timeout"
-        with open(outputname, 'r') as output_file:
-            expected_output = output_file.read()
+    def runJava(self,file,classname,question_path,question_name):
+        testing_dir = os.path.join(settings.BASE_DIR,"Contest","testers")
+        os.chdir(testing_dir)
 
-        print(output.decode().strip())
-        print(expected_output.strip())
-        if output.decode().strip() == expected_output.strip():
-            return True
+        java_command = ['java','execute', self.num_of_test_cases,classname, f'{file}',question_path,question_name]
+        process = subprocess.Popen(java_command)
+
+        # Wait for the subprocess to complete and get the exit code
+        exit_code = process.wait()
+
+        # Use the exit code as the result returned from the Java program
+        result = exit_code
+        self.deleteFile(file)
+        self.deleteFile(os.path.join(testing_dir,f"{classname}.class"))
+        if result == 0:
+            return [True]
+        elif result == 2:
+            return [False,"timeout","0"]
         else:
-            return False
-        
+            return [False,"invalidAnswer"]
     
     def runPython(self,inputname,outputname,file):
         TIMEOUT = 10
@@ -62,7 +56,8 @@ class RunCode:
                 return "timeout"
             with open(outputname, 'r') as output_file:
                 expected_output = output_file.read()
-
+            # print(output.decode().strip())
+            # print(expected_output.strip())
             if output.decode().strip() == expected_output.strip():
                 return True
             else:
@@ -78,36 +73,17 @@ class RunCode:
         pass
     
     def run(self):
-        path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
-        os.chdir(path)
         code = self.file.read()
         file = makethefile(code,self.extensions)
         languages = {"python": self.runPython, "java": self.runJava,"c":self.runC}
         compare_results = languages[self.language]
+        path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
         if self.language != "python":
-            file = self.makeClass(file)
-            pool = multiprocessing.Pool()
-            # arguments = [(f"{self.contest_name}__{self.question_name}__input1.txt"
-            #                             ,f"{self.contest_name}__{self.question_name}__output1.txt",
-            #                             file),
-            #         (f"{self.contest_name}__{self.question_name}__input2.txt"
-            #                             ,f"{self.contest_name}__{self.question_name}__output2.txt",
-            #                             file)]
-            arguments = [(f"{self.contest_name}__{self.question_name}__input{i}.txt",
-                          f"{self.contest_name}__{self.question_name}__output{i}.txt",
-                            file
-                          )for i in range(1,self.num_of_test_cases+1)]
-            results = [pool.apply_async(compare_results, args=(arg1, arg2,arg3)) for arg1, arg2,arg3 in arguments]
-            pool.close()
-            pool.join()
-
-            # Get the results from the asynchronous function calls
-            results = [result.get() for result in results]
-
-            # Print the results
-            print("Results:", results)
-            return [True]
+            class_changed_file = changeClassName(file)
+            res = compare_results(file,class_changed_file,path,f"{self.contest_name}__{self.question_name}__")
+            return res
         else:
+            os.chdir(path)
             for run in range(1,self.num_of_test_cases+1):
                 result = compare_results(f"{self.contest_name}__{self.question_name}__input{run}.txt"
                                         ,f"{self.contest_name}__{self.question_name}__output{run}.txt",
@@ -134,9 +110,27 @@ class SubmitCode:
     def __init__(self) -> None:
         pass
 
+def changeClassName(filepath):
+    choices = string.ascii_letters + string.ascii_lowercase
+    newClassName = "".join(random.choice(choices) for i in range(8))
+    with open(filepath, 'r+') as f:
+        contents = f.read()
+        match = re.search(r'class (\w+)\b', contents)
+        current_class = match.group(1)
+
+        new_contents = contents.replace(f'class {current_class}', f'class {newClassName}')
+
+        f.seek(0)
+        f.truncate()
+        f.write(new_contents)
+
+    f.close()
+    
+    return newClassName
+
 def makethefile(file_code,suffix):
     filename = f"{secrets.token_urlsafe()}{suffix}"
-    filepath = os.path.join(settings.BASE_DIR,"files","temp_files",filename)
+    filepath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
     code = file_code.decode('utf-8') 
     with open(filepath, 'w') as f:
         f.write(code)
