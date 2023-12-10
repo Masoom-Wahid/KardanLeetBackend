@@ -24,10 +24,10 @@ public class execute{
             Process process = Runtime.getRuntime().exec("javac " + javaFilePath);
             int exitCode = process.waitFor();
             if (exitCode == 0) {
-                for (int i = 1;i <= num_of_test_cases;i++){
+                for (int i = 1;i <= num_of_test_cases;i++){    
+                Process executionProcess = Runtime.getRuntime().exec("java " + className);
                 String inputname = questionsPath+"/"+questionName+"input"+i+".txt";
                 String outputname = questionsPath+"/"+questionName+"output"+i+".txt";
-                Process executionProcess = Runtime.getRuntime().exec("java " + className);
                 try{
                     // Pass input from input.txt to the executed Java program
                     Thread timeoutThread = new Thread(() -> {
@@ -61,6 +61,7 @@ public class execute{
                         File outputFile = new File(outputname);
                         String expectedOutput = Files.readString(outputFile.toPath(), StandardCharsets.UTF_8);
                         // System.out.println(output.trim());
+                        // System.out.println("***********************************************************");
                         // System.out.println(expectedOutput.trim());
                         if (!output.trim().equals(expectedOutput.trim())) {
                             System.exit(1);

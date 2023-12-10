@@ -18,8 +18,15 @@ from django.utils.deconstruct import deconstructible
 
 class sample_test_cases(models.Model):
     question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
-    sample = models.TextField()
-    answer = models.TextField()
+    sample = models.CharField(max_length=70)
+    answer = models.CharField(max_length=70)
+    explanation  = models.CharField(max_length=70)
+    def __str__(self):
+        return str(self.question.title)
+
+class Consttraints(models.Model):
+    question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
+    consts = models.TextField()
 
     def __str__(self):
         return str(self.question.title)

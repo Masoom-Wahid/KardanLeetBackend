@@ -4,11 +4,41 @@ from .models import (
     Contest_Groups,
     Contestants,
     Contest_submissiosn,
-    Contest_solutions
 )
 
 admin.site.register(Contests)
 admin.site.register(Contest_Groups)
 admin.site.register(Contestants)
-admin.site.register(Contest_submissiosn)
-admin.site.register(Contest_solutions)
+
+
+@admin.register(Contest_submissiosn)
+class Contest_submissiosnAdmin(admin.ModelAdmin):
+    fieldsets = (
+        (
+            ("Question Details"),
+            {"fields":              
+            ("id",
+            "question",
+            "lang",
+            "solved",
+            "status",
+            "submit_time"
+            ),
+             }
+        ),
+        (
+            ("Submission Code"),
+            {"fields":("code",)}
+        )
+    )
+    list_display = (
+        "id",
+        "question",
+        "lang",
+        "solved",
+        "status",
+        "submit_time",
+    )
+    ordering = ("-submit_time",)
+    readonly_fields = ("submit_time","id",)
+    search_fields = ("id","lang")

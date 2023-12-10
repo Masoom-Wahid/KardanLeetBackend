@@ -7,13 +7,14 @@ from .serializers import (ContestantsSerializer,
 from rest_framework.permissions import IsAdminUser , IsAuthenticated,AllowAny
 from rest_framework import status
 from Questions.serializers import SampleSerializer
-from .models import Contests,Contest_Groups,Contestants,Contest_Question
+from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import create_folder_for_contest,delete_folder_for_contest
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from .testers.execute import RunCode
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from django.shortcuts import get_object_or_404
 
 
 class CompetetionViewSet(ModelViewSet):
@@ -64,60 +65,35 @@ class CompetetionViewSet(ModelViewSet):
             },
             status=status.HTTP_200_OK
         )
-    def get_suffix(self,lang):
-        suffixes = {
-            "python":".py",
-            "java":".java",
-            "c":".cpp"
-        }
-        return suffixes[lang]
+
     
     def create(self,request):
         lang = request.data.get("lang",None)
         typeof = request.data.get("type",None)
         code = request.FILES.get("code",None)
-        question_name = request.data.get("question_name",None)
-        #FIXME : question name is only given in id so think about if this is correct
-        contest_name = request.data.get("contest_name",None)
+
+        question = get_object_or_404(Contest_Question, pk=request.data.get("id",None))
+        group = get_object_or_404(Contest_Groups,user=request.user)
+        contest = get_object_or_404(Contests,starred=True,started=True)
         if lang and code and typeof:
-            suffix = self.get_suffix(lang)
-            if typeof == "run":
-                run = RunCode(question_name,
-                                    contest_name,
-                                    lang,
-                                    suffix,
-                                    code
-                                    )
-                result = run.run()
-                if result[0]:
-                    return Response(
-                        status=status.HTTP_200_OK
-                    )
-                else:
-                    if result[1] == "timeout":
-                        return Response(
-                            {"detail":"timeout , Infinite Loop",
-                                "num_of_solved":result[2]},
-                                status=status.HTTP_400_BAD_REQUEST
-                            
+            run = RunCode(
+                        typeof
+                        ,group
+                        ,question
+                        ,contest
+                        ,lang
+                        ,code
                         )
-
-                    else:
-                        return Response(
-                            {"detail":"Invalid Answer",
-                                "num_of_solved":result[1]
-                                },
-                                status=status.HTTP_400_BAD_REQUEST
-                        )
-
-            elif typeof == "submit":
-                pass
+            result,detail = run.run()
+            if result:
+                return Response(
+                    status=status.HTTP_200_OK
+                )
             else:
                 return Response(
-                    {"detail":"Invalid Type"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    {"detail":detail},
+                    status=status.HTTP_406_NOT_ACCEPTABLE
                 )
-
         else:
             return Response(
                 {"detail":"lang and code and typeof required"},

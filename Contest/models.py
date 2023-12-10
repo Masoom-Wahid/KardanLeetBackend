@@ -10,6 +10,7 @@ class Contests(models.Model):
     duration = models.DurationField()
     started = models.BooleanField(default=False)
     starred = models.BooleanField(default=False)
+    finished = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -34,26 +35,26 @@ class Contest_Question(models.Model):
     title = models.CharField(max_length=40)
     lvl = models.CharField(max_length=20,choices=QUESTION_LEVELS)
     description = models.TextField()
+    time_limit = models.IntegerField(default=10)
     num_of_test_cases = models.IntegerField()
-
+    
+    def is_solved(self):
+        solved = self.Contest_submissiosn_set.filter(solved=True)
+        return True if solved else False
     def __str__(self):
         return self.title
     
 
 class Contest_submissiosn(models.Model):
+    id = models.TextField(primary_key=True,unique=True)
     group = models.ForeignKey(Contest_Groups,on_delete=models.CASCADE)
     question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
+    lang = models.CharField(max_length=10)
     code = models.TextField()
+    solved = models.BooleanField(default=False)
+    status= models.CharField(max_length=30)
     submit_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.group.group_name)
+        return str(self.id)
 
-class Contest_solutions(models.Model):
-    group = models.ForeignKey(Contest_Groups,on_delete=models.CASCADE)
-    submission = models.ForeignKey(Contest_submissiosn,on_delete=models.CASCADE)
-    solved = models.BooleanField(default=False)
-    solved_time = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return str(self.group.group_name)    
