@@ -33,14 +33,11 @@ class MakeSubmissions:
         self.obj.save()
     
     def setStatus(self,status):
-        self.obj.status = status
+        if status == "Solved":
+            self.obj.solved = True
+        self.obj.status=status
         self.obj.save()
 
-
-    def solved(self):
-        self.obj.solved = True
-        self.obj.status = "Solved"
-        self.obj.save()
 
 
 
@@ -103,6 +100,20 @@ class RunCode:
                 "error":error.decode()
             }
         return True,name
+    
+    def makeJavaExec(self,filepath,filename):
+        """Makes the c file executable using g++"""
+        path = os.path.join(settings.BASE_DIR,"Contest","testers")
+        os.chdir(path)
+        process = subprocess.Popen(['javac', filepath], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        process.wait()
+        _,error = process.communicate()
+        if error:
+            return False,{
+                "reason":"Error",
+                "error":error.decode()
+            }
+        return True,filename
 
     def changeClassName(self,filepath,filename):
         """Since Java Is The Most Useless Language
@@ -113,7 +124,7 @@ class RunCode:
             match = re.search(r'class (\w+)\b', contents)
             current_class = match.group(1)
 
-            new_contents = contents.replace(f'class {current_class}', f'class {filename[0:-5]}')
+            new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
 
             f.seek(0)
             f.truncate()
@@ -127,6 +138,9 @@ class RunCode:
         """Make the file with the given suffix and code"""
         choices = string.ascii_letters + string.ascii_lowercase
         newClassName = "".join(random.choice(choices) for i in range(8))
+        if newClassName == "execute":
+            newClassName = "".join(random.choice(choices) for i in range(8))
+        
         filename = f"{newClassName}{suffix}"
         filepath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
         code = file_code.decode('utf-8') 
@@ -177,22 +191,62 @@ class RunCode:
                 "error":str(e)
             }
 
-    def runJava(self,file,classname,question_name):
-        question_path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
-        testing_dir = os.path.join(settings.BASE_DIR,"Contest","testers")
-        os.chdir(testing_dir)
-        java_command = ["java",'execute',str(self.num_of_test_cases),classname, f'{file}',question_path,question_name]
-        process = subprocess.Popen(java_command)
-        exit_code = process.wait()
-        self.deleteFile(file)
-        self.deleteFile(os.path.join(testing_dir,f"{classname}.class"))
-        if exit_code == 0:
-            self.submission.solved()
-            return [True]
-        elif exit_code == 2:
-            return [False,"timeout","0"]
-        else:
-            return [False,"invalidAnswer"]
+
+    def runJava(self,inputname,outputname,file,filename):
+        try:
+            thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
+            os.chdir(os.path.dirname(thispath))
+            process = subprocess.Popen(["java",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            question_path = os.path.join(settings.BASE_DIR,"files","contest",self.contest_name,self.question_name)
+            os.chdir(question_path)
+            with open(inputname, 'r') as input_file:
+                input_data = input_file.read().encode()
+            try:
+                output, error = process.communicate(input=input_data,timeout=self.time_limit)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                return False,{
+                    "reason":"timeout"
+                }
+            if error:
+                return False,{
+                "reason":"Error",
+                "error":str(error)
+            }
+            with open(outputname, 'r') as output_file:
+                expected_output = output_file.read()
+            # print(output.decode().strip())
+            # print(expected_output.strip())
+            if output.decode().strip() == expected_output.strip():
+                return True,{}
+            else:
+                return False,{
+                    "reason":"invalidAnswer",
+                    "output":output.decode().strip(),
+                    "expected_output":expected_output.strip()
+                }
+            
+        except Exception as e:
+            return False,{
+                "reason":"Exception",
+                "error":str(e)
+            }
+    # def runJava(self,file,classname,question_name):
+        # question_path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
+        # testing_dir = os.path.join(settings.BASE_DIR,"Contest","testers")
+        # os.chdir(testing_dir)
+        # java_command = ["java",'execute',str(self.num_of_test_cases),classname, f'{file}',question_path,question_name]
+        # process = subprocess.Popen(java_command)
+        # exit_code = process.wait()
+        # self.deleteFile(file)
+        # self.deleteFile(os.path.join(testing_dir,f"{classname}.class"))
+        # if exit_code == 0:
+        #     self.submission.solved()
+        #     return [True]
+        # elif exit_code == 2:
+        #     return [False,"timeout","0"]
+        # else:
+        #     return [False,"invalidAnswer"]
     
     def runPython(self,inputname,outputname,file,filename):
         question_path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
@@ -295,37 +349,48 @@ class RunCode:
         extension , compare_results = self.getLangDetails(self.language)
         file , filename = self.makethefile(code,extension)
         
+        # if self.language == "none":
+        #     pass
+        #     # class_changed_file = self.changeClassName(file,filename)
+        #     # result,detail = compare_results(file,class_changed_file,f"{self.contest_name}__{self.question_name}__")
+        #     # return result,detail
+        # else:
         if self.language == "java":
-            class_changed_file = self.changeClassName(file,filename)
-            result,detail = compare_results(file,class_changed_file,f"{self.contest_name}__{self.question_name}__")
-            return result,detail
-        else:
-            if self.language == "c" or self.language == "c++":
-                result , filename = self.makeCExec(file,filename)
-                if not result:
-                    return False,filename
-            elif self.language == "ts":
-                result ,filename = self.makeJs(file,filename)
-                if not result:
-                    return False,filename
-            for i in range(1,self.num_of_test_cases+1):
-                result ,detail = compare_results(
-                    f"{self.contest_name}__{self.question_name}__input{i}.txt"
-                    ,f"{self.contest_name}__{self.question_name}__output{i}.txt"
-                    ,file
-                    ,filename)
-                if result:
-                    self.last_solved += 1
-                else:
-                    self.deleteFile(file)
-                    if self.language == "c++" or self.language == "c" or self.language == "ts":
-                        self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
-                    detail["amount_solved"] = self.last_solved
-                    return False,detail
-            """Since These Lanuages Compile with other data"""
-            if self.language == "c++" or self.language == "c" or self.language == "ts":
-                self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
+            filename = self.changeClassName(file,filename)
+            result,detail = self.makeJavaExec(file,filename)
+            if not result:
+                return False,detail
+        elif self.language == "c" or self.language == "c++":
+            result , filename = self.makeCExec(file,filename)
+            if not result:
+                return False,filename
+        elif self.language == "ts":
+            result ,filename = self.makeJs(file,filename)
+            if not result:
+                return False,filename
+        for i in range(1,self.num_of_test_cases+1):
+            result ,detail = compare_results(
+                f"{self.contest_name}__{self.question_name}__input{i}.txt"
+                ,f"{self.contest_name}__{self.question_name}__output{i}.txt"
+                ,file
+                ,filename
+                )
+            if result:
+                self.last_solved += 1
+            else:
+                self.deleteFile(file)
+                if self.language == "c++" or self.language == "c" or self.language == "ts":
+                    self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
+                detail["amount_solved"] = self.last_solved
+                if self.type == "submit" : self.submission.setStatus(detail["reason"])
+                return False,detail
             
-            self.deleteFile(file)
-            if self.type == "submit" : self.submission.solved()
-            return True,{}
+        """Since These Lanuages Compile with other data"""
+        if self.language == "c++" or self.language == "c" or self.language == "ts" or self.language=="java":
+            if self.language == "java":
+                filename = filename+".class"
+            self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
+        
+        self.deleteFile(file)
+        if self.type == "submit" : self.submission.setStatus("Solved")
+        return True,{}
