@@ -1,16 +1,28 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 QUESTION_LEVELS = [
     ("EASY","EASY"),
     ("MEDUIM","MEDUIM"),
     ("HARD","HARD")
 ]
+POINTS = {
+    "EASY":8,
+    "MEDUIM":10,
+    "HARD":12,
+}
+
+PENALTY = 300
 class Contests(models.Model):
     name = models.CharField(max_length=50,null=False,blank=False,unique=True)
     duration = models.DurationField()
     started = models.BooleanField(default=False)
+    started_at = models.DateTimeField()
     starred = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
+
+    def calculateTotalPoints(self):
+        return sum([question.point for question in self.contest_question_set.all()])
 
     def __str__(self):
         return self.name
@@ -20,6 +32,18 @@ class Contest_Groups(models.Model):
     group_name = models.CharField(max_length=40)
     user = models.ForeignKey(User,on_delete=models.CASCADE)
 
+
+    def calculateTime(self):
+        totalTime = 0
+        for submissions in self.contest_submissiosn_set.filter(solved=True):
+            totalTime += submissions.submitTime()
+        print(totalTime)
+        return int(totalTime) 
+    def calculatePenalty(self):
+        return PENALTY * self.contest_submissiosn_set.filter(solved=False).count()
+    
+    def calculateTotalPoint(self):
+        return sum([submission.question.point for submission in self.contest_submissiosn_set.filter(solved=True)])
     def __str__(self):
         return self.group_name
 
@@ -34,6 +58,7 @@ class Contest_Question(models.Model):
     contest = models.ForeignKey(Contests,on_delete=models.CASCADE)
     title = models.CharField(max_length=40)
     lvl = models.CharField(max_length=20,choices=QUESTION_LEVELS)
+    point = models.IntegerField()
     description = models.TextField()
     time_limit = models.IntegerField(default=10)
     num_of_test_cases = models.IntegerField()
@@ -54,6 +79,11 @@ class Contest_submissiosn(models.Model):
     solved = models.BooleanField(default=False)
     status= models.CharField(max_length=30)
     submit_time = models.DateTimeField(auto_now_add=True)
+
+    def submitTime(self):
+        return  (self.submit_time - self.group.contest.started_at).total_seconds()
+
+    
 
     def __str__(self):
         return str(self.id)

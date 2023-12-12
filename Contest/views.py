@@ -3,7 +3,8 @@ from rest_framework.viewsets import ModelViewSet
 from .serializers import (ContestantsSerializer,
                           ContestSerializer,
                           ContestGroupSerializer,
-                          ContestQuestionSerializer)
+                          ContestQuestionSerializer,
+                          ContestSubmissionSerializer)
 from rest_framework.permissions import IsAdminUser , IsAuthenticated,AllowAny
 from rest_framework import status
 from Questions.serializers import SampleSerializer
@@ -15,6 +16,8 @@ from .testers.execute import RunCode
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from .leaderboard import Leaderboard
 
 
 class CompetetionViewSet(ModelViewSet):
@@ -40,6 +43,8 @@ class CompetetionViewSet(ModelViewSet):
         )
     
     def retrieve(self,request,pk):
+        show_submissions = request.GET.get("submissions",False)
+        show_code = request.GET.get("show_code",False)
         try:
             instance = Contests.objects.get(starred=True)
         except Contests.DoesNotExist:
@@ -55,16 +60,28 @@ class CompetetionViewSet(ModelViewSet):
                 {"detail":"Invalid Question ID"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        serializer = ContestQuestionSerializer(question,many=False)
-        sample_test_cases = question.sample_test_cases_set.all()
-        sample_serilizer = SampleSerializer(sample_test_cases,many=True)
-        return Response(
-            {
-                "question":serializer.data,
-                "test_cases":sample_serilizer.data
-            },
-            status=status.HTTP_200_OK
-        )
+        if show_submissions:
+            group = get_object_or_404(Contest_Groups,user=request.user)
+            print(group.calculateTime())
+            submissions = Contest_submissiosn.objects.filter(group=group,question=question)
+            serializer = ContestSubmissionSerializer(submissions,many=True,context={
+                "showCode":show_code
+            })
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            serializer = ContestQuestionSerializer(question,many=False)
+            sample_test_cases = question.sample_test_cases_set.all()
+            sample_serilizer = SampleSerializer(sample_test_cases,many=True)
+            return Response(
+                {
+                    "question":serializer.data,
+                    "test_cases":sample_serilizer.data
+                },
+                status=status.HTTP_200_OK
+            )
 
     
     def create(self,request):
@@ -75,6 +92,11 @@ class CompetetionViewSet(ModelViewSet):
         question = get_object_or_404(Contest_Question, pk=request.data.get("id",None))
         group = get_object_or_404(Contest_Groups,user=request.user)
         contest = get_object_or_404(Contests,starred=True,started=True)
+        # if Contest_submissiosn.objects.filter(group=group,question=question,solved=True).exists():
+        #     return Response(
+        #         {"detail":"You Have Already Solved This Question"},
+        #         status=status.HTTP_403_FORBIDDEN
+        #     )
         if lang and code and typeof:
             run = RunCode(
                         typeof
@@ -204,10 +226,19 @@ class ContestViewSet(ModelViewSet):
         name = request.data.get("name",None)
         if name:
             #TODO : Add a worker here 
-            instance = Contests.objects.get("name",None)
+            instance = get_object_or_404(Contests,name=name)
+            instance.started = True
+            instance.started_at = timezone.now()
+            instance.save()
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
 
         else:
-            pass
+            return Response(
+                {"detail":"name required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     # @action(detail=False,methods=["POST"],parser_classes=[MultiPartParser,FormParser])
     # def sample(self,request):

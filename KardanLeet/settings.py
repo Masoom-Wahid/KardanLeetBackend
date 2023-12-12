@@ -17,6 +17,7 @@ ALLOWED_HOSTS = ["*"]
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -25,14 +26,30 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Auth',
     'Questions',
-    'Contest',
-    'rest_framework'
+    'Contest.apps.ContestConfig',
+    'rest_framework',
 ]
+
+
+APPSCHEDULER_JOBS = [
+    ('Contest.tasks.scheduler', 'scheduler')
+]
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "unique-snowflake",
+    }
+}
+
+# ...
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "django.middleware.cache.UpdateCacheMiddleware",
     'django.middleware.common.CommonMiddleware',
+    "django.middleware.cache.FetchFromCacheMiddleware",
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -56,10 +73,15 @@ TEMPLATES = [
         },
     },
 ]
-
+ASGI_APPLICATION = 'KardanLeet.asgi.application'
 WSGI_APPLICATION = 'KardanLeet.wsgi.application'
 
 
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 

@@ -13,8 +13,8 @@ def generate_user_for_contest(amount,contest_name,contest):
         instance = User.objects.create(
             username = user_name,
             email = f"{user_name}@email.com",
-            password =password
         )
+        instance.set_password(password)
         instance.is_active = True
         instance.save()
         Contest_Groups.objects.create(

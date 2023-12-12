@@ -8,6 +8,14 @@ from Contest.models import (Contest_Question,
                             Contest_Groups)
 import re
 import random, string
+from Contest.tasks import scheduler
+from django.utils import timezone
+from datetime import timedelta
+from django.core.cache import cache
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+
 
 
 class MakeSubmissions:
@@ -20,6 +28,7 @@ class MakeSubmissions:
         self.group = group
         self.question = question
         self.language = language
+        self.runTime = timezone.now() + timedelta(seconds=2)
         self.obj = Contest_submissiosn.objects.create(
             id = self.makeId(),
             group = group,
@@ -28,6 +37,26 @@ class MakeSubmissions:
             code = "",
             status=""
         )
+
+    def updateLeaderboard(self,instance):
+        leaderboard_obj = cache.get("leaderboard")
+        if leaderboard_obj != None:
+            
+            stats = {
+                "id":self.group.id,
+                "point":self.group.calculateTotalPoint(),
+                "time":self.group.calculateTime(),
+                "penalty":self.group.calculatePenalty()
+            }
+            leaderboard_obj[self.group.group_name] = stats
+            cache.set("leaderboard",leaderboard_obj)
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})
+        else:
+            pass        
+
+
+
     def writeCode(self,file):
         self.obj.code = file
         self.obj.save()
@@ -36,6 +65,7 @@ class MakeSubmissions:
         if status == "Solved":
             self.obj.solved = True
         self.obj.status=status
+        scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.runTime,id=self.obj.id)
         self.obj.save()
 
 
@@ -61,37 +91,20 @@ class RunCode:
         self.language = language
         self.time_limit = question.time_limit
         self.file = file
-
-    def getLangDetails(self,lang):
-        """Used For Dynamically Producing the file suffixes or extenstions and their functions"""
-        suffixes = {
-            "python":".py",
-            "java":".java",
-            "c++":".cpp",
-            "c":".c",
-            "js":".js",
-            "ts":".ts"
-        }
-        languages = {
-            "python": self.runPython,
-            "java": self.runJava,
-            "c":self.runC,
-            "c++":self.runC,
-            "js":self.runJs,
-            "ts":self.runJs
-            }
-
-        return suffixes[lang],languages[lang]
     
-    def makeCExec(self,filepath,filename):
-        """Makes the c file executable using g++"""
+
+    def MakeExecutable(self,filepath,filename,lang):
         path = os.path.join(settings.BASE_DIR,"Contest","testers")
-        if self.language == "c++":
-            name = filename[:-4]
-        else:
-            name = filename[:-2]
         os.chdir(path)
-        process = subprocess.Popen(['g++', filename,"-o",name], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        if lang == "java":
+            name = filename
+            process = subprocess.Popen(['javac', filepath], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        elif lang == "c" or lang == "c++":
+            name = filename[:-2] if lang == "c" else filename[:-4]
+            process = subprocess.Popen(['g++', filename,"-o",name], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        elif lang == "ts":
+            process = subprocess.Popen(["tsc",filepath],stderr=subprocess.PIPE)
+            name = filename[0:-2] + "js"
         process.wait()
         _,error = process.communicate()
         if error:
@@ -100,39 +113,33 @@ class RunCode:
                 "error":error.decode()
             }
         return True,name
-    
-    def makeJavaExec(self,filepath,filename):
-        """Makes the c file executable using g++"""
-        path = os.path.join(settings.BASE_DIR,"Contest","testers")
-        os.chdir(path)
-        process = subprocess.Popen(['javac', filepath], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-        process.wait()
-        _,error = process.communicate()
-        if error:
-            return False,{
-                "reason":"Error",
-                "error":error.decode()
-            }
-        return True,filename
 
     def changeClassName(self,filepath,filename):
         """Since Java Is The Most Useless Language
             I will have to change the public class name myself
+            -- this will also give error if 2 public class found so 1 public class is allowed
         """
-        with open(filepath, 'r+') as f:
-            contents = f.read()
-            match = re.search(r'class (\w+)\b', contents)
-            current_class = match.group(1)
+        try:
+            with open(filepath, 'r+') as f:
+                contents = f.read()
+                match = re.search(r'class (\w+)\b', contents)
+                current_class = match.group(1)
 
-            new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
+                new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
 
-            f.seek(0)
-            f.truncate()
-            f.write(new_contents)
+                f.seek(0)
+                f.truncate()
+                f.write(new_contents)
 
-        f.close()
-        
-        return filename[0:-5]
+            f.close()
+            
+            return True,filename[0:-5]
+        except Exception as e:
+            return False,{
+                "reason":"Class Issues",
+                "detail":"make sure you only have one valid class"
+            }
+
 
     def makethefile(self,file_code,suffix):
         """Make the file with the given suffix and code"""
@@ -154,55 +161,27 @@ class RunCode:
     """Used For Deleting the processed files"""
     deleteFile = lambda self,filename : os.remove(os.path.join("/",filename))
     
-    def runJs(self,inputname,outputname,file,filename):
-        path = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
+    def runCode(self,inputname,outputname,file,filename,lang):
+        thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
+        os.chdir(os.path.dirname(thispath))
         try:
-            process = subprocess.Popen(['node',path], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            if lang == "python":
+                process = subprocess.Popen(['python3', file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            elif lang == "java":
+                process = subprocess.Popen(["java",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            elif lang=="php":
+                process = subprocess.Popen(['php', file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            elif lang == "c" or lang == "c++":
+                process = subprocess.Popen(f"./{filename}", stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            elif lang == "js" or lang == "ts":
+                process = subprocess.Popen(['node',thispath], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+
             path = os.path.join(settings.BASE_DIR,"files","contest",self.contest_name,self.question_name)
             os.chdir(path)
             with open(inputname, 'r') as input_file:
                 input_data = input_file.read().encode()
             try:
                 output, error = process.communicate(input_data,timeout=self.time_limit)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                return "timeout"
-            if error:
-                return False,{
-                "reason":"Error",
-                "error":str(e)
-            }
-            with open(outputname, 'r') as output_file:
-                expected_output = output_file.read()
-            # print(output.decode().strip())
-            # print(expected_output.strip())
-            if output.decode().strip() == expected_output.strip():
-                return True,{}
-            else:
-                return False,{
-                    "reason":"invalidAnswer",
-                    "output":output.decode().strip(),
-                    "expected_output":expected_output.strip()
-                }
-            
-        except Exception as e:
-            return False,{
-                "reason":"Exception",
-                "error":str(e)
-            }
-
-
-    def runJava(self,inputname,outputname,file,filename):
-        try:
-            thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
-            os.chdir(os.path.dirname(thispath))
-            process = subprocess.Popen(["java",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            question_path = os.path.join(settings.BASE_DIR,"files","contest",self.contest_name,self.question_name)
-            os.chdir(question_path)
-            with open(inputname, 'r') as input_file:
-                input_data = input_file.read().encode()
-            try:
-                output, error = process.communicate(input=input_data,timeout=self.time_limit)
             except subprocess.TimeoutExpired:
                 process.kill()
                 return False,{
@@ -225,62 +204,6 @@ class RunCode:
                     "output":output.decode().strip(),
                     "expected_output":expected_output.strip()
                 }
-            
-        except Exception as e:
-            return False,{
-                "reason":"Exception",
-                "error":str(e)
-            }
-    # def runJava(self,file,classname,question_name):
-        # question_path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
-        # testing_dir = os.path.join(settings.BASE_DIR,"Contest","testers")
-        # os.chdir(testing_dir)
-        # java_command = ["java",'execute',str(self.num_of_test_cases),classname, f'{file}',question_path,question_name]
-        # process = subprocess.Popen(java_command)
-        # exit_code = process.wait()
-        # self.deleteFile(file)
-        # self.deleteFile(os.path.join(testing_dir,f"{classname}.class"))
-        # if exit_code == 0:
-        #     self.submission.solved()
-        #     return [True]
-        # elif exit_code == 2:
-        #     return [False,"timeout","0"]
-        # else:
-        #     return [False,"invalidAnswer"]
-    
-    def runPython(self,inputname,outputname,file,filename):
-        question_path = os.path.join(settings.BASE_DIR,"files","contest",f"{self.contest_name}",f"{self.question_name}")
-        os.chdir(question_path)
-        try:
-            #TODO : make the python3 varibale name dynamic from settings
-            process = subprocess.Popen(['python3', file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            with open(inputname, 'r') as input_file:
-                input_data = input_file.read().encode()
-            try:
-                output, error = process.communicate(input_data,timeout=self.time_limit)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                return False,{
-                    "reason":"timeout"
-                }
-            if error:
-                return False,{
-                "reason":"Error",
-                "error":str(e)
-            }
-            with open(outputname, 'r') as output_file:
-                expected_output = output_file.read()
-            # print(output.decode().strip())
-            # print(expected_output.strip())
-            if output.decode().strip() == expected_output.strip():
-                return True,{}
-            else:
-                return False,{
-                    "reason":"invalidAnswer",
-                    "output":output.decode().strip(),
-                    "expected_output":expected_output.strip()
-                }
-            
         except Exception as e:
             return False,{
                 "reason":"Exception",
@@ -288,92 +211,42 @@ class RunCode:
             }
         
 
-
-    
-    def runC(self,inputname,outputname,file,filename):
-        thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
-        os.chdir(os.path.dirname(thispath))
-        try:
-            process = subprocess.Popen(f"./{filename}", stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            path = os.path.join(settings.BASE_DIR,"files","contest",self.contest_name,self.question_name)
-            os.chdir(path)
-            with open(inputname, 'r') as input_file:
-                input_data = input_file.read().encode()
-            try:
-                output, error = process.communicate(input_data,timeout=self.time_limit)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                return False,{
-                    "reason":"timeout"
-                }
-            if error:
-                return False,{
-                "reason":"Error",
-                "error":str(e)
-            }
-            with open(outputname, 'r') as output_file:
-                expected_output = output_file.read()
-            # print(output.decode().strip())
-            # print(expected_output.strip())
-            if output.decode().strip() == expected_output.strip():
-                return True,{}
-            else:
-                return False,{
-                    "reason":"invalidAnswer",
-                    "output":output.decode().strip(),
-                    "expected_output":expected_output.strip()
-                }
-        except Exception as e:
-            return False,{
-                "reason":"Exception",
-                "error":str(e)
-            }
-        
-    def makeJs(self,file,filename):
-        """Makes a javascript file out of typescript"""
-        path = os.path.join(settings.BASE_DIR,"Contest","testers")
-        os.chdir(path)
-        process = subprocess.Popen(["tsc",file],stderr=subprocess.PIPE)
-        process.wait()
-        _ , error = process.communicate()
-        if error:
-            return False,{
-                "reason":"Error",
-                "error":error.decode()
-            }
-        res_filename = filename[0:-2] + "js"
-        return True,res_filename
-    
     def run(self):
         code = self.file.read()
-        extension , compare_results = self.getLangDetails(self.language)
+        """Used For Dynamically Producing the file suffixes or extenstions and their functions"""
+        suffixes = {
+            "python":".py",
+            "java":".java",
+            "c++":".cpp",
+            "c":".c",
+            "js":".js",
+            "ts":".ts",
+            "php":".php"
+        }
+        extension = suffixes[self.language]
+        # Create the file in disk so that we can run it
         file , filename = self.makethefile(code,extension)
-        
-        # if self.language == "none":
-        #     pass
-        #     # class_changed_file = self.changeClassName(file,filename)
-        #     # result,detail = compare_results(file,class_changed_file,f"{self.contest_name}__{self.question_name}__")
-        #     # return result,detail
-        # else:
-        if self.language == "java":
-            filename = self.changeClassName(file,filename)
-            result,detail = self.makeJavaExec(file,filename)
+        #These languag require 2 Step compilation to run
+        executableFiles = ["java","c","c++","ts"]
+        # execute the files
+        if self.language in executableFiles:
+            if self.language == "java":
+                changing_result,filename = self.changeClassName(file,filename)
+                if not changing_result:
+                    return False,filename
+            result,filename = self.MakeExecutable(file,filename,self.language)
             if not result:
-                return False,detail
-        elif self.language == "c" or self.language == "c++":
-            result , filename = self.makeCExec(file,filename)
-            if not result:
+                self.deleteFile(file)
                 return False,filename
-        elif self.language == "ts":
-            result ,filename = self.makeJs(file,filename)
-            if not result:
-                return False,filename
+            
+        # we loop on the number of testcases
         for i in range(1,self.num_of_test_cases+1):
-            result ,detail = compare_results(
+            result ,detail = self.runCode(
                 f"{self.contest_name}__{self.question_name}__input{i}.txt"
                 ,f"{self.contest_name}__{self.question_name}__output{i}.txt"
                 ,file
                 ,filename
+                ,self.language
                 )
             if result:
                 self.last_solved += 1
@@ -390,7 +263,8 @@ class RunCode:
             if self.language == "java":
                 filename = filename+".class"
             self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
-        
+        """Delete The Original File"""
         self.deleteFile(file)
-        if self.type == "submit" : self.submission.setStatus("Solved")
+        """If The User Solved A Question Then SetStatus To Solved"""
+        if self.type == "submit" : self.submission.setStatus("Solved") 
         return True,{}
