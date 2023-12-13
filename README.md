@@ -13,11 +13,12 @@
 ### :warning: This Is The Setup Documenation If You Want API Documentation, Click [Here](./docs/Introduction.md).
 ## ERD
 You Can View The ERD [Here](https://drawsql.app/teams/masooms-team/diagrams/kardanleet)
+<hr>
 
 ### How To Setup?
 * #### Start By Creating A Virtual Env.
 ``` shell
-    python3 -m venv venv 
+python3 -m venv venv 
 
 ```
 <hr>
