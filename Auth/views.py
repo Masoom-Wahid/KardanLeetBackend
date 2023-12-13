@@ -8,6 +8,7 @@ from rest_framework import status
 from Contest.models import Contests,Contest_Groups,Contestants
 from .utils import generate_user_for_contest
 from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()
@@ -20,14 +21,9 @@ class UserViewSet(ModelViewSet):
             if typeof == "contest":
                 amount = int(request.data.get("amount"))
                 contest_id = request.data.get("contest_id")
-                try:
-                    contest_instance = Contests.objects.get(id=contest_id)
-                except:
-                    return Response(
-                        {"detail":"Invalid Contest ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                passwords = generate_user_for_contest(amount,contest_instance.name,contest_instance)
+                contest_instance = get_object_or_404(Contests,id=contest_id)
+                startFrom = contest_instance.contest_groups_set.all().count() + 1
+                passwords = generate_user_for_contest(amount,startFrom,contest_instance.name,contest_instance)
                 return Response(
                     passwords,
                     status=status.HTTP_201_CREATED
@@ -66,4 +62,20 @@ class UserViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
+    @action(detail=False,methods=["POST"])
+    def alias(self,request):
+        username = request.data.get("username",None)
+        given_alias = request.data.get("alias",None)
+        if username and given_alias:
+            user_instance = get_object_or_404(User,username=username)
+            group_instance = Contest_Groups.objects.get(user=user_instance)
+            group_instance.group_name = given_alias
+            group_instance.save()
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+        else:
+            return Response(
+                {"detail":"username and alias required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )

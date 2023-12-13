@@ -35,9 +35,10 @@ class Contest_Groups(models.Model):
 
     def calculateTime(self):
         totalTime = 0
+        #TODO : Count unSolved Question's Time
         for submissions in self.contest_submissiosn_set.filter(solved=True):
             totalTime += submissions.submitTime()
-        print(totalTime)
+
         return int(totalTime) 
     def calculatePenalty(self):
         return PENALTY * self.contest_submissiosn_set.filter(solved=False).count()

@@ -17,7 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from .leaderboard import Leaderboard
+from .tasks import scheduler
 
 
 class CompetetionViewSet(ModelViewSet):
@@ -158,44 +158,50 @@ class ContestViewSet(ModelViewSet):
         delete_folder_for_contest(instance.name)
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
+    def FinishContest(self):
+        starred_contest = Contests.objects.get(starred=True,started=True)
+        starred_contest.finished = True
+
     @action(detail=False,methods=["POST"])
-    def star_contest(self,request):
+    def actions(self,request):
+        action_data = request.data.get("action",None)
+        action , typeof = action_data.split("_")
         contest_name = request.data.get("name",None)
-        typeof = request.data.get("type",None)
-        if contest_name and typeof:
-            try:
-                contest = Contests.objects.get(name=contest_name)
-            except Contests.DoesNotExist:
-                return Response(
-                    {"detail":"Invalid Contest Name"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            if typeof == "star":
-                if Contests.objects.filter(starred=True).exists():
+        if contest_name and action:
+            contest_instance = get_object_or_404(Contests,name=contest_name)
+            """Change The Contest Based On The Request"""
+            if action == "start":
+                if action == "do" and contest_instance.started != True:
+                    contest_instance.started = True
+                    contest_instance.started_at = timezone.now()
+                    run_at = timezone.now() + contest_instance.duration
+                    scheduler.add_job(self.FinishContest, 'date', run_date=run_at,id="Contest_Listener")
+                else:
                     return Response(
-                        {"detail":"an starred contest already exists"},
+                        {"detail":"The Contest Has Already Started"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-                else:
-                    contest.starred = True
-                    contest.save()
+                if action == "undo" : contest_instance.started = False ; scheduler.pause_job("Contest_Listener")
+                if action == "resume" : contest_instance.starred = True ; scheduler.resume_job("Contest_Listener")
+            if action == "reset":
+                if action == "do" : contest_instance.starred = False ; scheduler.remove_job("Contest_Listener")
+            elif action == "star":
+                if Contests.objects.filter(starred=True).exists():
                     return Response(
-                    status=status.HTTP_204_NO_CONTENT
+                        {"detail":"Starred Contest Already Exists"},
+                        status=status.HTTP_400_BAD_REQUEST
                     )
-            elif typeof == "unstar":
-                contest.starred = False
-                contest.save()
-                return Response(
-                    status=status.HTTP_204_NO_CONTENT
-                )
-            else:
-                return Response(
-                    {"detail":"Invalid Type"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+                contest_instance.starred = True if typeof == "do" else False
+            elif action == "finished":
+                contest_instance.finished = True if typeof == "do" else False
+            
+            contest_instance.save()
+            return Response(status=status.HTTP_204_NO_CONTENT)
         else:
-            pass
+            return Response({
+                "detail":"name and action required"},
+                status=status.HTTP_400_BAD_REQUEST
+                )
     
     @action(detail=False,methods=["POST"])
     def groups(self,request):
@@ -221,24 +227,7 @@ class ContestViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    @action(detail=False,methods=["POST"])
-    def start_contest(self,request):
-        name = request.data.get("name",None)
-        if name:
-            #TODO : Add a worker here 
-            instance = get_object_or_404(Contests,name=name)
-            instance.started = True
-            instance.started_at = timezone.now()
-            instance.save()
-            return Response(
-                status=status.HTTP_204_NO_CONTENT
-            )
 
-        else:
-            return Response(
-                {"detail":"name required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
     # @action(detail=False,methods=["POST"],parser_classes=[MultiPartParser,FormParser])
     # def sample(self,request):
@@ -251,6 +240,7 @@ class ContestViewSet(ModelViewSet):
     #     return Response(
     #         status=status.HTTP_204_NO_CONTENT
     #     )
+    
     @action(detail=False,methods=["GET","POST","DELETE"])
     def contestants(self,request):
         method = request.method
