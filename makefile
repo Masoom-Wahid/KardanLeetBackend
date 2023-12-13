@@ -18,11 +18,6 @@ check-compilers:
 	@command -v java >/dev/null 2>&1 && { echo -e "\033[32mJava compiler found\033[0m"; } || { echo -e "\033[31mJava compiler not found\033[0m"; exit 1; }
 .PHONY: check-compilers
 
-
-
-
-
-
 create-venv:
 	$(PYTHON) -m venv $(VENV)
 
@@ -48,7 +43,7 @@ activate-venv:
 	exit 1
 endif
 
-install-requirements: activate-venv
+install-requirements:
 	pip install -r $(REQUIREMENTS)
 
 makemigrations: install-requirements
