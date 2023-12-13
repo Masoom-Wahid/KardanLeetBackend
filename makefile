@@ -2,15 +2,16 @@
 
 PYTHON := python3
 VENV := venv
-REQUIREMENTS := requirements.txt
+REQUIREMENTS := requirments.txt
 OS := $(shell uname -s)
 
 create-venv:
 	$(PYTHON) -m venv $(VENV)
-
+su:
+	$(PYTHON) manage.py createsuperuser
 ifeq ($(OS),Linux)
 activate-venv:
-	source $(VENV)/bin/activate
+	source ./$(VENV)/bin/activate 
 else ifeq ($(OS),Darwin)
 activate-venv:
 	source $(VENV)/bin/activate
@@ -33,7 +34,12 @@ migrate:
 	$(PYTHON) manage.py migrate
 
 
-default: create-venv activate-venv install-requirements makemigrations migrate
+default:
+	create-venv
+	activate-venv
+	install-requirements
+	makemigrations
+	migrate
 
 req:
 	pip freeze > requirments.txt
