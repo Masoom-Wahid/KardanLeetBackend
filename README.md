@@ -20,14 +20,14 @@ You Can View The ERD [Here](https://drawsql.app/teams/masooms-team/diagrams/kard
 <hr>
 
 ### How To Setup?
-* #### Start By Creating A Virtual Env.
+#### Start By Creating A Virtual Env.
 ``` shell
 python3 -m venv venv 
 
 ```
 <hr>
 
-* #### Run The Venv (This Can Differ Depending On Your OS)
+#### Run The Venv (This Can Differ Depending On Your OS)
 ##### For Linux and Mac
 ``` shell
 source ./venv/bin/activate
@@ -38,22 +38,25 @@ venv\Scripts\activate
 ```
 <hr>
 
-* #### :white_check_mark:  If Everything Has Gone Correct and Now U Have Activated Your Venv
+#### If Everything Has Gone Correct and Now U Have Activated Your Venv :white_check_mark: 
 #### run this command when u are in the same dir as manage.py file and it should do all the work
 ```shell
 make
 ```
 <hr>
 
-### :warning: This Program Requires You Have the compilers of all the languages said in the above
-* #### To Check If You Have All Those Compilers
+> \[!NOTE]
+>
+> This Program Requires You Have the compilers of all the languages said in the above
+> To Check If You Have All Those Compilers Run:
+
 ```shell
 make check-compilers
 ```
 <br>
 
-* ##### :white_check_mark: If Passed All The TestCases Start Reading API Documenation From [Here](./docs/Introduction.md)
-* ##### :x: If Not Install The Said Compilers You Do Not Have
+##### :white_check_mark: If Passed All The TestCases , Start Reading API Documenation From [Here](./docs/Introduction.md)
+##### :x: If Not Install The Said Compilers You Do Not Have
 
 
 
