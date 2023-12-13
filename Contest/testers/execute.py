@@ -99,9 +99,15 @@ class RunCode:
         if lang == "java":
             name = filename
             process = subprocess.Popen(['javac', filepath], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        elif lang == "c#":
+            name = filename[:-3]
+            process = subprocess.Popen(["mcs",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         elif lang == "c" or lang == "c++":
             name = filename[:-2] if lang == "c" else filename[:-4]
             process = subprocess.Popen(['g++', filename,"-o",name], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        elif lang == "rust":
+            name = filename[:-3]
+            process = subprocess.Popen(["rustc",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
         elif lang == "ts":
             process = subprocess.Popen(["tsc",filepath],stderr=subprocess.PIPE)
             name = filename[0:-2] + "js"
@@ -124,9 +130,10 @@ class RunCode:
                 contents = f.read()
                 match = re.search(r'class (\w+)\b', contents)
                 current_class = match.group(1)
-
-                new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
-
+                if self.language == "java":
+                    new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
+                else:
+                    new_contents = contents.replace(f'class {current_class}', f'class {filename[0:-5]}')
                 f.seek(0)
                 f.truncate()
                 f.write(new_contents)
@@ -171,8 +178,10 @@ class RunCode:
                 process = subprocess.Popen(["java",filename], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             elif lang=="php":
                 process = subprocess.Popen(['php', file], stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            elif lang == "c" or lang == "c++":
+            elif lang == "c" or lang == "c++" or lang == "rust":  
                 process = subprocess.Popen(f"./{filename}", stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            elif lang == "c#":
+                process = subprocess.Popen(f"./{filename}.exe", stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             elif lang == "js" or lang == "ts":
                 process = subprocess.Popen(['node',thispath], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
@@ -221,18 +230,21 @@ class RunCode:
             "c":".c",
             "js":".js",
             "ts":".ts",
-            "php":".php"
+            "php":".php",
+            "rust":".rs",
+            "c#":".cs"
         }
         extension = suffixes[self.language]
         # Create the file in disk so that we can run it
         file , filename = self.makethefile(code,extension)
         #These languag require 2 Step compilation to run
-        executableFiles = ["java","c","c++","ts"]
+        executableFiles = ["java","c","c++","ts","rust","c#"]
         # execute the files
         if self.language in executableFiles:
             if self.language == "java":
                 changing_result,filename = self.changeClassName(file,filename)
                 if not changing_result:
+                    self.deleteFile(file)
                     return False,filename
             result,filename = self.MakeExecutable(file,filename,self.language)
             if not result:
@@ -259,9 +271,11 @@ class RunCode:
                 return False,detail
             
         """Since These Lanuages Compile with other data"""
-        if self.language == "c++" or self.language == "c" or self.language == "ts" or self.language=="java":
+        if self.language in executableFiles:
             if self.language == "java":
                 filename = filename+".class"
+            if self.language == "c#":
+                filename = filename + ".exe"
             self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
         """Delete The Original File"""
         self.deleteFile(file)
