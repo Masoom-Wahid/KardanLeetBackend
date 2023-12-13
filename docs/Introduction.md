@@ -1,7 +1,7 @@
 # Introduction
 <hr>
 
-## :heavy_exclamation_mark: This Is An Introduction , Api Documentation Of Each Part Are Below :arrow_down:  :
+## :bangbang: This Is An Introduction , Api Documentation Of Each Part Are Below :arrow_down:  :
 * ### [Auth](./Auth.md)
 * ### [Contest](./Contest.md)
 * ### [Question](./Question.md)
