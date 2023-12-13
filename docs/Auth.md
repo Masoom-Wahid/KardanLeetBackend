@@ -1,14 +1,14 @@
 # Auth
 <hr>
 
-## Table Of Content
+## Endpoints
 * ### [Creating Admins](#creating-admins)
 * ### [Creating ContestGroups](#contest-group-and-user-creation)
 * ### [Creating Alias For ContestGroups](#creating-alias)
 
 <hr>
 
-## Creating Admins
+# Creating Admins
 * #### Permissions : Admin
 * ##### EndPoint:
 ```shell
@@ -26,7 +26,7 @@ POST auth/users/
 ```
 <hr>
 
-## Contest Group And User Creation
+# Contest Group And User Creation
 * #### Permissions : Admin
 * ##### EndPoint:
 ```shell
@@ -45,7 +45,7 @@ POST auth/users/
 * ##### Note: This Makes Contestants From Where The Contest has , so if contest has 20 Groups it will start naming them from 21 and so on ...
 <hr>
 
-## Creating Alias
+# Creating Alias
 * #### Permissions : Admin
 * ##### EndPoint:
 ```shell
@@ -62,3 +62,5 @@ POST auth/users/alias/
 ```
 * ##### Note: If There Is No Alias For The Given Group it will show the random generated one from when the group was created
 <hr>
+
+# Continue [here](./Question.md)

@@ -47,7 +47,7 @@
 * #### The Folder are made like this So that when requiring the Inputs We Already know Where They Are At
 <br>
 
-* #### So Everytime Submit Or Run Your File we Compile the Given File and then run them on the number of testCases they have and their specific loactions
+* #### So Everytime You Submit Or Run Your File we Compile the Given File and then run them on the number of testCases they have and their specific loactions
 <br>
 
 * #### It also has RealTime LeaderBoard which Ranks The Users Based On Their Point,Time and Penalty

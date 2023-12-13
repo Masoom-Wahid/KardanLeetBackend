@@ -21,23 +21,12 @@ from django.shortcuts import get_object_or_404
 class QuestionViewSet(ModelViewSet):
     queryset = Contest_Question.objects.all()
     serializer_class = ContestQuestionsSerializer
-    def get_permissions(self):
-        if self.action in ["create"]:
-            permission_classes = [IsAdminUser]
-        else:
-            permission_classes = [IsAuthenticated]
-        return (permission() for permission in permission_classes)
+    permission_classes = [IsAdminUser]
     
     def list(self,request):
         contest_name = request.GET.get("name",None)
         if contest_name:
-            try:
-                contest = Contests.objects.get(name=contest_name)
-            except Contests.DoesNotExist:
-                return Response(
-                    {"detail":"Invalid Name"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            contest = get_object_or_404(Contests,name=contest_name)
             instance = Contest_Question.objects.filter(contest=contest)
             serializer = ContestQuestionsSerializer(instance,many=True)
             return Response(
@@ -78,13 +67,14 @@ class QuestionViewSet(ModelViewSet):
     
 
     @action(detail=False,methods=["POST","DELETE"])
-    def test_cases(self,request):
+    def testCases(self,request):
         method = request.method
         if method == "POST":
             question_id = request.data.get("id",None)
             sample = request.data.get("sample",None)
             answer = request.data.get("answer",None)
-            if question_id and sample and answer:
+            explnation = request.data.get("explanation",None)
+            if question_id and sample and answer and explnation:
                 try:
                     question_instance = Contest_Question.objects.get(id=question_id)
                 except Contest_Question.DoesNotExist:
@@ -95,7 +85,8 @@ class QuestionViewSet(ModelViewSet):
                 instance = sample_test_cases.objects.create(
                     question = question_instance,
                     sample = sample,
-                    answer = answer
+                    answer = answer,
+                    explanation = explnation
                 )
                 serializer = SampleSerializer(instance,many=False)
                 return Response(
@@ -159,9 +150,7 @@ class QuestionViewSet(ModelViewSet):
                 )
         elif method == "PUT":
             contest_name = request.data.get("contest",None)
-            print(contest_name)
             question_id = request.data.get("question",None)
-            print(question_id)
             id = request.data.get("id",None)
             file = request.FILES.get("file",None)
             if question_id and contest_name:
