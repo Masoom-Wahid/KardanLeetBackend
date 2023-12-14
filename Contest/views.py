@@ -12,7 +12,9 @@ from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest
 from rest_framework.decorators import action
 from .utils import create_folder_for_contest,delete_folder_for_contest
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
-from .testers.execute import RunCode
+from .testers.Run import Run
+from .testers.ManualRun import ManualRun
+from .testers.SubmitRun import SubmitRun
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
@@ -88,7 +90,7 @@ class CompetetionViewSet(ModelViewSet):
         lang = request.data.get("lang",None)
         typeof = request.data.get("type",None)
         code = request.FILES.get("code",None)
-
+        print(code)
         question = get_object_or_404(Contest_Question, pk=request.data.get("id",None))
         group = get_object_or_404(Contest_Groups,user=request.user)
         contest = get_object_or_404(Contests,starred=True,started=True)
@@ -98,17 +100,38 @@ class CompetetionViewSet(ModelViewSet):
         #         status=status.HTTP_403_FORBIDDEN
         #     )
         if lang and code and typeof:
-            run = RunCode(
-                        typeof
-                        ,group
-                        ,question
-                        ,contest
-                        ,lang
-                        ,code
-                        )
+            if typeof == "run":
+                run = Run(
+                            group
+                            ,question
+                            ,contest
+                            ,lang
+                            ,code
+                            )
+            elif typeof=="submit":
+                run = SubmitRun(
+                            group
+                            ,question
+                            ,contest
+                            ,lang
+                            ,code
+                            )
+            else:
+                manual_data = request.data.get("manual_testcase",None)
+                run = ManualRun(
+                            group
+                            ,question
+                            ,contest
+                            ,lang
+                            ,code
+                            ,manual_data
+                            )
+        
+
             result,detail = run.run()
             if result:
                 return Response(
+                    {"detail":detail},
                     status=status.HTTP_200_OK
                 )
             else:
