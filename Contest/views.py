@@ -184,6 +184,7 @@ class ContestViewSet(ModelViewSet):
     def FinishContest(self):
         starred_contest = Contests.objects.get(starred=True,started=True)
         starred_contest.finished = True
+        starred_contest.save()
 
     @action(detail=False,methods=["POST"])
     def actions(self,request):
@@ -193,30 +194,39 @@ class ContestViewSet(ModelViewSet):
         if contest_name and action:
             contest_instance = get_object_or_404(Contests,name=contest_name)
             """Change The Contest Based On The Request"""
-            if action == "start":
-                if action == "do" and contest_instance.started != True:
-                    contest_instance.started = True
-                    contest_instance.started_at = timezone.now()
-                    run_at = timezone.now() + contest_instance.duration
-                    scheduler.add_job(self.FinishContest, 'date', run_date=run_at,id="Contest_Listener")
+            if typeof == "start":
+                if action == "do":
+                    if contest_instance.started == True and contest_instance.starred != False:
+                        contest_instance.started = True
+                        contest_instance.started_at = timezone.now()
+                        run_at = timezone.now() + contest_instance.duration
+                        scheduler.add_job(self.FinishContest, 'date', run_date=run_at,id="Contest_Listener")
+                    else:
+                        return Response(
+                            {"detail":"The Contest Has Already Started or You Need To Star The Contest"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                elif action == "undo" : contest_instance.started = False ; scheduler.pause_job("Contest_Listener")
+                elif action == "resume" : contest_instance.starred = True ; scheduler.resume_job("Contest_Listener")
+            if typeof == "reset":
+                if action == "do" : 
+                    contest_instance.starred = False 
+                    try:
+                        scheduler.remove_job("Contest_Listener")
+                    except:
+                        pass
+            elif typeof == "star":
+                if action == "do":
+                    if Contests.objects.filter(starred=True).exists():
+                        return Response(
+                            {"detail":"Starred Contest Already Exists"},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
+                    contest_instance.starred = True 
                 else:
-                    return Response(
-                        {"detail":"The Contest Has Already Started"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                if action == "undo" : contest_instance.started = False ; scheduler.pause_job("Contest_Listener")
-                if action == "resume" : contest_instance.starred = True ; scheduler.resume_job("Contest_Listener")
-            if action == "reset":
-                if action == "do" : contest_instance.starred = False ; scheduler.remove_job("Contest_Listener")
-            elif action == "star":
-                if Contests.objects.filter(starred=True).exists():
-                    return Response(
-                        {"detail":"Starred Contest Already Exists"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                contest_instance.starred = True if typeof == "do" else False
-            elif action == "finished":
-                contest_instance.finished = True if typeof == "do" else False
+                    contest_instance.starred = False
+            elif typeof == "finish":
+                contest_instance.finished = True if action == "do" else False
             
             contest_instance.save()
             return Response(status=status.HTTP_204_NO_CONTENT)

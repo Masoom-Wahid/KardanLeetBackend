@@ -45,7 +45,7 @@ make
 ```
 <hr>
 
-> \[!NOTE]
+> \[!CAUTION]
 >
 > This Program Requires You Have the compilers of all the languages said in the above
 > To Check If You Have All Those Compilers Run:

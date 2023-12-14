@@ -48,6 +48,11 @@
 <br>
 
 * #### So Everytime You Submit Or Run Your File we Compile the Given File and then run them on the number of testCases they have and their specific loactions
+> \[!TIP]
+>
+> You Can Run , Submit , Or Manually Run Your TestCases
+> Run Will Not Affect Your Points , While Submit Does Affect Your Point
+> Manual Is Used When You Try To Run Your Own Code
 <br>
 
 * #### It also has RealTime LeaderBoard which Ranks The Users Based On Their Point,Time and Penalty
