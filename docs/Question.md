@@ -1,115 +1,107 @@
-# Questions
-<hr>
+# *API Documentation*
 
-## Endpoints
-* ### [ListQuestion](#list-questions)
-* ### [CreateQuestions](#create-questions)
-* ### [test_cases](#testcases)
-* ### [question_files](#questionsfiles)
-<hr>
+## *Questions*
 
-# List Questions
-### Permissions : Admin
-### Endpoint:
-```
-GET api/questions?name=<contestname>
-```
-#### returns all the questions in the given contest
-<hr>
+### *Endpoints*
 
-# Create Questions
-* #### Permissions : Admin
-* #### Endpoint:
-```
-POST api/questions/
-```
-* #### requires title,lvl(HARD,MEDUIM,EASY),point,time_limit,num_of_test_cases,description
-* #### time_limit is not mandatory , if not given it will be defaulted to 10
-```JSON
-    "title":"Factorial",
-    "lvl":"EASY",
-    "point":"10",
-    "time_limit":"8",
-    "num_of_test_cases":"12",
-    "description":"Find The Factorial Of The Given Number",
-```
-* #### num_of_test_cases if important since it shows the maximum number of testcases which will be given
-<hr>
+### List Questions
 
-# TestCases
-* #### !!! This Is The Testcases which are shown under the description and are just for explanation
-* #### Permissions : Admin
-* #### Endpoint: 
-```
-POST api/questions/testCases/
-```
-* #### requires -> id(question_id),sample,answer,example
-```JSON
-    "id":"1",
-    "sample":"",
-    "answer":"",
-    "explanation":"",
-    "
-```
-<hr>
+- *Permissions:* Admin
+- *Endpoint:* *GET api/questions?name=<contestname>*
+- *Description:* Returns all the questions in the given contest.
 
-# QuestionsFiles
-* #### !!! These are the files which the user will be judged from
-* #### Permissions : Admin
-* #### Endpoint: 
-```
-POST api/questions/files/
-```
-* #### requires -> id(question_id),files
-* #### it should multipart not JSON
-<br>
+### Create Questions
 
-```JSON
-    "id":"1",
-    "files":"input1.txt",
-    "files":"output1.txt",
-    "files":"input2.txt",
-    "files":"output2.txt"
-    "
-```
+- *Permissions:* Admin
+- *Endpoint:* *POST api/questions/*
+- *Description:* Creates a new question.
+- *Parameters:*
+    - *title*: Question title.
+    - *lvl*: Difficulty level (HARD, MEDIUM, EASY).
+    - *point*: Points for the question.
+    - *time_limit*: Time limit for the question. Default is 10 if not provided.
+    - *num_of_test_cases*: Number of test cases.
+    - *description*: Description of the question.
+- *Example Request Body:*
+    
+    json
+    jsonCopy code
+    {
+      "title": "Factorial",
+      "lvl": "EASY",
+      "point": "10",
+      "time_limit": "8",
+      "num_of_test_cases": "12",
+      "description": "Find The Factorial Of The Given Number"
+    }
+    
+    
+    
 
-* #### based on the num_of_test_cases given when giving the question all the input and output should exist , so if given 3 then there should input1,input2,input3 and output1,output2,output2 -> naming them like this are mandatory
-<br>
+### *Test Cases*
 
-* #### Endpoint : if u want to see the num of testcases of a question 
-```
-GET api/questions/files?contest=<contest_name>&question=<question_id>
-```
-* #### this just returns a number which is the num of testCases
-<br>
+- *Permissions:* Admin
+- *Endpoint:* *POST api/questions/testCases/*
+- *Description:* Add test cases to a question.
+- *Parameters:*
+    - *id*: Question ID.
+    - *sample*: Sample data.
+    - *answer*: Answer data.
+    - *explanation*: Explanation of the test case.
+- *Example Request Body:*
+    
+    json
+    jsonCopy code
+    {
+      "id": "1",
+      "sample": "",
+      "answer": "",
+      "explanation": ""
+    }
+    
+    
+    
 
-* #### Endpoint : if u want to see the data of a file in the question's testcases
-```
-GET api/questions/files?contest=<contest_name>&question=<question_id>&id=<testfile_id>
-```
+### *Questions Files*
 
-* #### id should be smth like this : if u want to see input1 then id is input1 so it is the naming convention from before
+- *Permissions:* Admin
+- *Endpoint:* *POST api/questions/files/*
+- *Description:* Upload files for question test cases. Must be multipart, not JSON.
+- *Parameters:*
+    - *id*: Question ID.
+    - *files*: Files for the question.
+- *Notes:* Based on *num_of_test_cases* given in the question, corresponding input and output files should exist (e.g., input1, input2, output1, output2).
+- *Example Request Body:*
+    
+    
+    multipartCopy code
+    id: 1
+    files: input1.txt
+    files: output1.txt
+    files: input2.txt
+    files: output2.txt
+    
+    
+    
 
-<br>
+### View Number of Test Cases
 
-* #### Permissions : Admin
-* #### Endpoint: 
-```
-PUT api/questions/files/
-```
-* #### requires -> id,file,contest(contest_name),question(question_id)
-* #### id is input1,input2 , which file of the question u want to change 
-* #### it should multipart not JSON
-<br>
+- *Endpoint:* *GET api/questions/files?contest=<contest_name>&question=<question_id>*
+- *Description:* Returns the number of test cases for a question.
 
-```JSON
-    "id":"input",
-    "file":"input1.txt",
-    "contest":"",
-    "question":"",
-```
+### View Data of a File in Test Cases
 
-* #### it changes the said file to that given file
+- *Endpoint:* *GET api/questions/files?contest=<contest_name>&question=<question_id>&id=<testfile_id>*
+- *Description:* Returns the data of a specific test file.
 
-## Continue [here](./Contest.md)
+### Update Test File
 
+- *Permissions:* Admin
+- *Endpoint:* *PUT api/questions/files/*
+- *Description:* Updates a specific test file for a question.
+- *Parameters:*
+    - *id*: File identifier (e.g., input1, input2).
+    - *file*: The file to upload.
+    - *contest*: Contest name.
+    - *question*: Question ID.
+- *Example Request Body:*

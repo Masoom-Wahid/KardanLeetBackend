@@ -6,9 +6,11 @@ from Contest.serializers import ContestantsSerializer
 from .permissions import IsSuperUserOrIsStaffUser
 from rest_framework import status
 from Contest.models import Contests,Contest_Groups,Contestants
+from rest_framework.permissions import AllowAny
 from .utils import generate_user_for_contest
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()

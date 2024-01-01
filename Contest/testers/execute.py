@@ -153,6 +153,9 @@ class RunCode:
             }
             with open(outputname, 'r') as output_file:
                 expected_output = output_file.read()
+            print(f"expected_output was : {expected_output.strip()}")
+            print()
+            print(f"your output was {output.decode().strip()}")
             if output.decode().strip() == expected_output.strip():
                 return True,{}
             else:

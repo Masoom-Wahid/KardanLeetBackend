@@ -5,7 +5,20 @@ VENV := venv
 REQUIREMENTS := requirments.txt
 OS := $(shell uname -s)
 
-default: install-requirements makemigrations migrate su runserver
+
+.PHONY: docker-run change
+
+default: build docker-run
+
+build:
+	docker build --tag contest .
+
+docker-run:
+	docker run --publish 8000:8000 contest
+
+change:
+	docker build --tag contest .
+#default: install-requirements makemigrations migrate su runserver
 check-compilers:
 	@command -v python3 >/dev/null 2>&1 && { echo -e "\033[32mPython found\033[0m"; } || { echo -e "\033[31mPython not found\033[0m"; exit 1; }
 	@command -v node >/dev/null 2>&1 && { echo -e "\033[32mNode.js found\033[0m"; } || { echo -e "\033[31mNode.js not found\033[0m"; exit 1; }
