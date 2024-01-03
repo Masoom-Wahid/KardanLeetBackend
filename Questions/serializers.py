@@ -1,8 +1,8 @@
 from rest_framework import serializers
-from .models import sample_test_cases
-from Contest.models import Contest_Question,Contests
-from rest_framework.response import Response
-from rest_framework import status
+from .models import sample_test_cases,Constraints
+from Contest.models import Contest_Question
+
+
 class ContestQuestionsSerializer(serializers.ModelSerializer):
     contest = serializers.SerializerMethodField()
     class Meta:
@@ -11,7 +11,7 @@ class ContestQuestionsSerializer(serializers.ModelSerializer):
     def get_contest(self,obj):
         return obj.contest.name
     
-class SampleSerializer(serializers.ModelSerializer):
+class SampleTestCaseSerializer(serializers.ModelSerializer):
     class Meta:
         model = sample_test_cases
         fields = '__all__'
@@ -32,5 +32,10 @@ class ContestQuestionsCreatorSerializer(serializers.ModelSerializer):
             contest = contest,
             **validated_data
         )
-        # instance.save()
         return instance
+
+
+class ConstraintsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Constraints
+        fields = "__all__"

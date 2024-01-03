@@ -7,7 +7,7 @@ from .serializers import (ContestantsSerializer,
                           ContestSubmissionSerializer)
 from rest_framework.permissions import IsAdminUser , IsAuthenticated,AllowAny
 from rest_framework import status
-from Questions.serializers import SampleSerializer
+from Questions.serializers import SampleTestCaseSerializer
 from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import create_folder_for_contest,delete_folder_for_contest
@@ -64,7 +64,6 @@ class CompetetionViewSet(ModelViewSet):
             )
         if show_submissions:
             group = get_object_or_404(Contest_Groups,user=request.user)
-            print(group.calculateTime())
             submissions = Contest_submissiosn.objects.filter(group=group,question=question)
             serializer = ContestSubmissionSerializer(submissions,many=True,context={
                 "showCode":show_code
@@ -76,7 +75,7 @@ class CompetetionViewSet(ModelViewSet):
         else:
             serializer = ContestQuestionSerializer(question,many=False)
             sample_test_cases = question.sample_test_cases_set.all()
-            sample_serilizer = SampleSerializer(sample_test_cases,many=True)
+            sample_serilizer = SampleTestCaseSerializer(sample_test_cases,many=True)
             return Response(
                 {
                     "question":serializer.data,

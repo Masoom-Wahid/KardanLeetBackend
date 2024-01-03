@@ -31,20 +31,19 @@ class SubmitRun(RunCode):
         return token
 
     def updateLeaderboard(self,instance):
-        leaderboard_obj = cache.get("leaderboard")
-        if leaderboard_obj != None:
-            
-            stats = {
-                "id":self.group.id,
-                "point":self.group.calculateTotalPoint(),
-                "time":self.group.calculateTime(),
-                "penalty":self.group.calculatePenalty()
-            }
-            leaderboard_obj[self.group.group_name] = stats
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})
-        else:
-            pass        
+        try:
+            leaderboard_obj = cache.get("leaderboard")
+        except:
+            pass
+        stats = {
+            "id":self.group.id,
+            "point":self.group.calculateTotalPoint(),
+            "time":self.group.calculateTime(),
+            "penalty":self.group.calculatePenalty()
+        }
+        leaderboard_obj[self.group.group_name] = stats
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
 
     def writeCode(self,file):
         self.obj.code = file

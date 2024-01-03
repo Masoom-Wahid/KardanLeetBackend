@@ -13,10 +13,12 @@ def create_folder_for_questions(contest_name,questions_name):
     
 def delete_folder_for_contest(contest_name,question_name):
     path = os.path.join(settings.MEDIA_ROOT, f"contest/{contest_name}/{question_name}")
-    print(path)
     contents = os.listdir(path)
-    print(contents)
-    if not contents:
-        os.rmdir(path)
-    else:
-        shutil.rmtree(path)
+    try:
+        if not contents:
+            os.rmdir(path)
+        else:
+            shutil.rmtree(path)
+    except OSError as e:
+        print("Error deleting the dir ",e)
+        return

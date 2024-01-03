@@ -1,19 +1,20 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from Contest.serializers import ContestantsSerializer,ContestSerializer
-from rest_framework.permissions import IsAdminUser , IsAuthenticated
 from rest_framework import status
-# from .models import Contest,Contest_Groups,Contestants
 from Contest.models import Contest_Question,Contests
-from .models import sample_test_cases,sample_test_cases_file
+from .models import sample_test_cases,sample_test_cases_file,Constraints
 from rest_framework.decorators import action
-from .serializers import ContestQuestionsCreatorSerializer,ContestQuestionsSerializer,SampleSerializer
+from .serializers import (ContestQuestionsCreatorSerializer
+                          ,ContestQuestionsSerializer
+                          ,SampleTestCaseSerializer
+                          ,ConstraintsSerializer
+                          )
+from Auth.permissions import IsSuperUserOrIsStaffUser
 from rest_framework.parsers import MultiPartParser, FormParser
-import uuid
-from django.core.files.base import ContentFile
 import os
 from django.conf import settings
-from .utils import create_folder_for_questions,delete_folder_for_contest
+from .utils import (create_folder_for_questions
+                    ,delete_folder_for_contest)
 from django.db.models import Q
 from rest_framework.status import *
 from django.shortcuts import get_object_or_404
@@ -21,7 +22,7 @@ from django.shortcuts import get_object_or_404
 class QuestionViewSet(ModelViewSet):
     queryset = Contest_Question.objects.all()
     serializer_class = ContestQuestionsSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsSuperUserOrIsStaffUser]
     
     def list(self,request):
         contest_name = request.GET.get("name",None)
@@ -47,13 +48,7 @@ class QuestionViewSet(ModelViewSet):
                 {"detail" :"name requried"},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        try:
-            contest_instance = Contests.objects.get(name=contest)
-        except Contests.DoesNotExist:
-            return Response(
-                {"detail":"invalid Contest ID"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        contest_instance = get_object_or_404(Contests,name=contest)
         serializer = ContestQuestionsCreatorSerializer(data=request.data,context = {
             "contest":contest_instance
         })
@@ -64,41 +59,25 @@ class QuestionViewSet(ModelViewSet):
             serializer.data, 
             status=status.HTTP_201_CREATED
         )
-    
+    #TODO: think about what to do about updating the question
+    # def update(self, request,pk=None):
+    #     question = get_object_or_404(Contest_Question,id=pk)
+    #     serializer = ContestQuestionsSerializer(instance=question,data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(
+    #         serializer.data,
+    #         status=status.HTTP_200_OK
+    #     )   
 
-    @action(detail=False,methods=["POST","DELETE"])
-    def testCases(self,request):
-        method = request.method
-        if method == "POST":
-            question_id = request.data.get("id",None)
-            sample = request.data.get("sample",None)
-            answer = request.data.get("answer",None)
-            explnation = request.data.get("explanation",None)
-            if question_id and sample and answer and explnation:
-                try:
-                    question_instance = Contest_Question.objects.get(id=question_id)
-                except Contest_Question.DoesNotExist:
-                    return Response(
-                        {"detail":"Invalid ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )  
-                instance = sample_test_cases.objects.create(
-                    question = question_instance,
-                    sample = sample,
-                    answer = answer,
-                    explanation = explnation
-                )
-                serializer = SampleSerializer(instance,many=False)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_201_CREATED
-                )
-            else:
-                return Response(
-                    {"detail":"sample , answer , id required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-    @action(detail=False,methods=["GET","POST","DELETE","PUT"],parser_classes=[MultiPartParser,FormParser])
+    def destroy(self, request,pk=None):
+        question = get_object_or_404(Contest_Question,id=pk)
+        delete_folder_for_contest(question.contest.name,question.title)
+        return Response(
+            status=status.HTTP_204_NO_CONTENT
+        )
+
+    @action(detail=False,methods=["GET","POST","PUT"],parser_classes=[MultiPartParser,FormParser])
     def files(self,request):
         method = request.method
         if method == "POST":
@@ -215,8 +194,22 @@ class QuestionViewSet(ModelViewSet):
 
 
 
+class ConstraintViewSet(ModelViewSet):
+    queryset = Constraints.objects.all()
+    serializer_class = ConstraintsSerializer
+    permission_classes = [IsSuperUserOrIsStaffUser]
+    def list(self,request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
+"""
+These Are The Real Test Cases , These Are The Descriptive TestCases Which Will Be
+Shown To User As An Introduction To The Problem
+"""
+class SampleTestCasesViewSet(ModelViewSet):
+    queryset = sample_test_cases.objects.all()
+    serializer_class = SampleTestCaseSerializer
+    permission_classes = [IsSuperUserOrIsStaffUser]
 
 
-
-
-
+    def list(self,request):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
