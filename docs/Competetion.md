@@ -52,17 +52,17 @@ GET api/competition/<question_id>?submissions=True&id=<submissions_id>
 <hr>
 
 # TestCode
-* ### Before We Begin , here is the lanuages and their synonyms which we will use
 * ### This Endpoint Will Only Accept MULTIPART , NO JSON
+* ### Before We Begin , here is the lanuages and their synonyms which we will use
 ```JSON
     "python":"python",
     "javascript":"js",
     "typescript":"ts",
     "php":"php",
     "rust":"rust",
-    "c#","c#",
+    "c#":"c#",
     "c":"c",
-    "c++","c++",
+    "c++":"c++",
     "java":"java"
 ```
 <br>
@@ -70,20 +70,6 @@ GET api/competition/<question_id>?submissions=True&id=<submissions_id>
 * ### [RunCode](#runcode-1)
 * ### [SubmitCode](#submitcode-1)
 * ### [ManualRun](#manualrun-1)
-<br>
-
-* ## RunCode
-* ### permissions : Authenticated Users
-* ### Endpoint :
-```
-POST api/competition/
-```
-```JSON
-    "lang":"python",
-    "type":"run",
-    "code":"Your Code File",
-    "id":"questions_id"
-```
 <br>
 
 * ## RunCode
@@ -127,7 +113,7 @@ POST api/competition/
 ```
 ```JSON
     "lang":"python",
-    "type":"submit",
+    "type":"manual",
     "code":"Your Code File",
     "id":"questions_id",
     "manual_testcase":"2\n4\n"  \\ "\n" indicates the end of the line , this should not be a file , just plain text
