@@ -16,7 +16,7 @@ from .testers.Run import Run
 from .testers.ManualRun import ManualRun
 from .testers.SubmitRun import SubmitRun
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
+from Auth.permissions import IsSuperUserOrIsStaffUser
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .tasks import scheduler
@@ -30,13 +30,7 @@ class CompetetionViewSet(ModelViewSet):
 
     def list(self,request):
         #TODO : Make this with caching
-        try:
-            instance = Contests.objects.get(starred=True)
-        except Contests.DoesNotExist:
-            return Response(
-                {"detail":"An Starred Contest Does Not Exist"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        instance = get_object_or_404(Contests,starred=True)
         questions = Contest_Question.objects.filter(contest=instance)
         serializer = ContestQuestionSerializer(questions,many=True)
         return Response(
@@ -46,7 +40,6 @@ class CompetetionViewSet(ModelViewSet):
     
     def retrieve(self,request,pk):
         show_submissions = request.GET.get("submissions",False)
-        show_code = request.GET.get("show_code",False)
         try:
             instance = Contests.objects.get(starred=True)
         except Contests.DoesNotExist:
@@ -63,11 +56,18 @@ class CompetetionViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         if show_submissions:
-            group = get_object_or_404(Contest_Groups,user=request.user)
-            submissions = Contest_submissiosn.objects.filter(group=group,question=question)
-            serializer = ContestSubmissionSerializer(submissions,many=True,context={
-                "showCode":show_code
-            })
+            submission_id = request.GET.get("id",None)
+            if submission_id:
+                submission_instance = get_object_or_404(Contest_submissiosn,id=submission_id)
+                serializer = ContestSubmissionSerializer(submission_instance,many=False,context={
+                    "showCode":True
+                })
+            else:
+                group = get_object_or_404(Contest_Groups,user=request.user)
+                submissions = Contest_submissiosn.objects.filter(group=group,question=question)
+                serializer = ContestSubmissionSerializer(submissions,many=True,context={
+                    "showCode":False
+                })
             return Response(
                 serializer.data,
                 status=status.HTTP_200_OK
@@ -89,15 +89,14 @@ class CompetetionViewSet(ModelViewSet):
         lang = request.data.get("lang",None)
         typeof = request.data.get("type",None)
         code = request.FILES.get("code",None)
-        print(code)
         question = get_object_or_404(Contest_Question, pk=request.data.get("id",None))
         group = get_object_or_404(Contest_Groups,user=request.user)
         contest = get_object_or_404(Contests,starred=True,started=True)
-        # if Contest_submissiosn.objects.filter(group=group,question=question,solved=True).exists():
-        #     return Response(
-        #         {"detail":"You Have Already Solved This Question"},
-        #         status=status.HTTP_403_FORBIDDEN
-        #     )
+        if Contest_submissiosn.objects.filter(group=group,question=question,solved=True).exists():
+            return Response(
+                {"detail":"You Have Already Solved This Question"},
+                status=status.HTTP_403_FORBIDDEN
+            )
         if lang and code and typeof:
             if typeof == "run":
                 run = Run(
@@ -153,16 +152,7 @@ class CompetetionViewSet(ModelViewSet):
 class ContestViewSet(ModelViewSet):
     queryset = Contests.objects.all()
     serializer_class = ContestSerializer
-
-    def get_permissions(self):
-        if self.action in ["create","list","retreive","destroy"]:
-            permission_classes = [IsAdminUser]
-        elif self.action in ["sample"]:
-            permission_classes = [AllowAny]
-        else:
-            permission_classes = [IsAuthenticated]
-
-        return (permission() for permission in permission_classes)
+    permission_classes = [IsSuperUserOrIsStaffUser]
 
 
     def create(self,request,*args,**kwargs):
@@ -185,6 +175,9 @@ class ContestViewSet(ModelViewSet):
         starred_contest.finished = True
         starred_contest.save()
 
+
+    def update(self,request,pk=None):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     @action(detail=False,methods=["POST"])
     def actions(self,request):
         action_data = request.data.get("action",None)
@@ -237,27 +230,13 @@ class ContestViewSet(ModelViewSet):
     
     @action(detail=False,methods=["POST"])
     def groups(self,request):
-        contest_name = request.data.get("name",None)
-        if contest_name:
-            try:
-                contest = Contests.objects.get(name=contest_name)
-            except:
-                return Response(
-                    {"detail":"Invalid Contest Name"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            instance = Contest_Groups.objects.filter(contest=contest)
-            serializer = ContestGroupSerializer(instance,many=True)
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-
-        else:
-            return Response(
-                {"detail":"id param required"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        contest = get_object_or_404(Contests,name=request.data.get("name",None))
+        instance = Contest_Groups.objects.filter(contest=contest)
+        serializer = ContestGroupSerializer(instance,many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
 
 
@@ -277,41 +256,25 @@ class ContestViewSet(ModelViewSet):
     def contestants(self,request):
         method = request.method
         if method == "GET":
-            group_id = request.GET.get("group_id",None)
-            if group_id:
-                try:
-                    group = Contest_Groups.objects.get(id=group_id)
-                except Contest_Groups.DoesNotExist:
-                    return Response(
-                        {"detail":"Invalid ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                instance = Contestants.objects.filter(group=group)
-                serializer = ContestantsSerializer(instance,many=True)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_200_OK
-                )
-            else:
-                pass
+            print("here")
+            group = get_object_or_404(Contest_Groups,id=request.GET.get("id",None))
+            instance = Contestants.objects.filter(group=group)
+            serializer = ContestantsSerializer(instance,many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
         if method == "POST":
-            group_id = request.data.get("group_id",None)
             name = request.data.get("name",None)
-            if not group_id or not name:
+            if not name:
                 return Response(
-                        {"detail":"Group_id and name required"},
+                        {"detail":"name required"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
             else:
-                try:
-                    instance = Contest_Groups.objects.get(id=group_id)
-                except Contest_Groups.DoesNotExist:
-                    return Response(
-                        {"detail":"Invalid ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+                group = get_object_or_404(Contest_Groups,id=request.data.get("id",None))
                 contest_instance = Contestants.objects.create(
-                    group = instance,
+                    group = group,
                     name=name
                 )
                 serializer = ContestantsSerializer(contest_instance,many=False)
@@ -320,24 +283,7 @@ class ContestViewSet(ModelViewSet):
                     status=status.HTTP_200_OK
                 )
         if method == "DELETE":
-            conetsant_id = request.data.get("id",None)
-            if conetsant_id != None:
-                try:
-                    instance = Contestants.objects.get(id=conetsant_id)
-                except Contestants.DoesNotExist:
-                    return Response(
-                        {"detail":"Invalid ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                instance.delete()
-                return Response(
-                    {"detail":"ok"},
-                    status=status.HTTP_200_OK
-                )
-            else:
-                return Response(
-                    {"detail":"id required"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
+            instance = get_object_or_404(Contestants,id=request.GET.get("id",None))
+            instance.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
     

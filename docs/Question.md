@@ -1,26 +1,3 @@
-<style>
-.break {
-  height: 3px;
-  background-color: #FDFDFD;
-  opacity:0.2;
-  border: none;
-  margin-top:12px;
-  margin-bottom:30px;
-}
-.border-break{
-  height: 8px;
-  background-color: #FDFDFD;
-  opacity:0.2;
-  border: none;
-  margin-top:12px;
-  margin-bottom:30px;
-}
-.text{
-    color:red;
-}
-</style>
-
-
 # Questions
 <div class="border-break"></div>
 
@@ -118,7 +95,7 @@ POST api/questions/constraints/
 ```
 ```JSON
     "question":"1",
-    "consts":"n<=10\nk<2**10
+    "consts":"n<=10\nk<2**10"
 
 ```
 

@@ -40,7 +40,7 @@ class ContestantsSerializer(serializers.ModelSerializer):
     group = serializers.SerializerMethodField()
     class Meta:
         model = Contestants
-        fields = ["id","name","group","starred"]
+        fields = ["id","name","group"]
 
     def get_group(self,obj):
         return obj.group.group_name
