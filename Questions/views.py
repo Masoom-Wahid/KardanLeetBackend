@@ -14,7 +14,9 @@ from rest_framework.parsers import MultiPartParser, FormParser
 import os
 from django.conf import settings
 from .utils import (create_folder_for_questions
-                    ,delete_folder_for_contest)
+                    ,delete_folder_for_contest
+                    ,change_question_name
+                    )
 from django.db.models import Q
 from rest_framework.status import *
 from django.shortcuts import get_object_or_404
@@ -59,16 +61,22 @@ class QuestionViewSet(ModelViewSet):
             serializer.data, 
             status=status.HTTP_201_CREATED
         )
-    #TODO: think about what to do about updating the question
-    # def update(self, request,pk=None):
-    #     question = get_object_or_404(Contest_Question,id=pk)
-    #     serializer = ContestQuestionsSerializer(instance=question,data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(
-    #         serializer.data,
-    #         status=status.HTTP_200_OK
-    #     )   
+    
+    def update(self, request,pk=None):
+        question = get_object_or_404(Contest_Question,id=pk)
+        """change the question folder name"""
+        if change_question_name(question.contest.name,question.title,request.data.get("title")) == None:
+            return Response(
+                {"detail":"Could Change The Folder Name for the question"},
+                status=status.HTTP_400_BAD_REQUEST)
+        """update the database instance"""
+        serializer = ContestQuestionsSerializer(instance=question,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )   
 
     def destroy(self, request,pk=None):
         question = get_object_or_404(Contest_Question,id=pk)
@@ -113,15 +121,13 @@ class QuestionViewSet(ModelViewSet):
                         question = question_instance,
                         test_case_file = file
                     )
-                    real_name = f"{instance.question.contest.name}__{instance.question.title}__{file.name}"
-                    file.name = real_name
                     os.rename(instance.test_case_file.path,
                             os.path.join(
                                 settings.MEDIA_ROOT,
                                     "contest",
                                     instance.question.contest.name,
                                     instance.question.title,
-                                    real_name))
+                                    file.name))
                     instance.save()
 
                 return Response(
@@ -194,6 +200,7 @@ class QuestionViewSet(ModelViewSet):
 
 
 
+"""View all the constraints"""
 class ConstraintViewSet(ModelViewSet):
     queryset = Constraints.objects.all()
     serializer_class = ConstraintsSerializer

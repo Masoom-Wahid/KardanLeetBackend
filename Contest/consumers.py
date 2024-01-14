@@ -8,6 +8,7 @@ from channels.db import database_sync_to_async
 from django.core.cache import cache
 from .models import Contests
 from collections import OrderedDict
+from .utils import getLeaderBoardData,sortLeaderBoarddata
 
 @sync_to_async
 def validate_user(hashId,access_token):
@@ -20,22 +21,16 @@ def validate_user(hashId,access_token):
     
 @sync_to_async
 def sortdata(data):
-    sorted_data = OrderedDict(sorted(data.items(), key=lambda x: (-x[1]['point'], x[1]['time'] + x[1]["penalty"])))
+    sorted_data = sortLeaderBoarddata(data)
     return sorted_data
 
 @sync_to_async
 def getData():
-    contests = Contests.objects.get(starred=True)
-    groups = contests.contest_groups_set.all()
-    result = {}
-    for group in groups:
-        result[group.group_name] = {
-            "id":group.id,
-            "point":group.calculateTotalPoint(),
-            "time":group.calculateTime(),
-            "penalty":group.calculatePenalty()
-        }
-    # print(result)
+    try:
+        contest = Contests.objects.get(starred=True)
+    except Contests.DoesNotExist:
+        return {"detail":"Contest Has Not Started Yet"}
+    result = getLeaderBoardData(contest)
     cache.set("leaderboard",result,14400)
     return result
 

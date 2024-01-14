@@ -1,11 +1,6 @@
 import subprocess
 import os
 from django.conf import settings
-import secrets
-from Contest.models import (Contest_Question,
-                            Contests,
-                            Contest_submissiosn,
-                            Contest_Groups)
 import re
 import random, string
 from Contest.tasks import scheduler
@@ -153,9 +148,13 @@ class RunCode:
             }
             with open(outputname, 'r') as output_file:
                 expected_output = output_file.read()
-            print(f"expected_output was : {expected_output.strip()}")
-            print()
-            print(f"your output was {output.decode().strip()}")
+            
+            """Only Print the Ouputs to the terminal when u are in debug mode"""
+            if settings.DEBUG:
+                print(f"expected_output was : {expected_output.strip()}")
+                print()
+                print(f"your output was {output.decode().strip()}")
+            
             if output.decode().strip() == expected_output.strip():
                 return True,{}
             else:
@@ -224,8 +223,8 @@ class RunCode:
         # we loop on the number of testcases
         for i in range(1,self.num_of_test_cases+1):
             result ,detail = self.runCode(
-                f"{self.contest_name}__{self.question_name}__input{i}.txt"
-                ,f"{self.contest_name}__{self.question_name}__output{i}.txt"
+                f"input{i}.txt"
+                ,f"output{i}.txt"
                 ,file
                 ,filename
                 ,self.language
@@ -237,11 +236,9 @@ class RunCode:
                 self.deleteCompiledData(filename)
                 detail["amount_solved"] = self.last_solved
                 return False,detail
-        # TODO : Refactor has compiled files are deleted 
         """Since These Lanuages Compile with other data"""
         self.deleteCompiledData(filename)
         """Delete The Original File"""
         self.deleteFile(file)
-        """If The User Solved A Question Then SetStatus To Solved"""
 
         return True,{}

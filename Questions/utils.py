@@ -1,8 +1,29 @@
 import os
 from django.conf import settings
 import shutil
+
+
+def change_question_name(contest_name,previous_question_name,new_question_name):
+    try:
+        """This essentially changes the last question folder name with the new question name"""
+        os.rename(
+            os.path.join(settings.MEDIA_ROOT,
+                               "contest",
+                               contest_name,
+                                previous_question_name
+                                ),
+            os.path.join(
+                settings.MEDIA_ROOT,
+                    "contest",
+                    contest_name,
+                    new_question_name,
+                    ))
+        return "Done"
+    except OSError as e:
+        print("Error Updating the folder name",e)
+        return None
+
 def create_folder_for_questions(contest_name,questions_name):
-    print(questions_name)
     path = os.path.join(settings.MEDIA_ROOT, f"contest/{contest_name}/{questions_name}")
     try:
         os.makedirs(path, exist_ok=True)

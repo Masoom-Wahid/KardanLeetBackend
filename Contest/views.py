@@ -10,7 +10,12 @@ from rest_framework import status
 from Questions.serializers import SampleTestCaseSerializer
 from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
-from .utils import create_folder_for_contest,delete_folder_for_contest
+from .utils import (create_folder_for_contest
+                    ,delete_folder_for_contest
+                    ,change_contest_name
+                    ,sortLeaderBoarddata,
+                    getLeaderBoardData
+                    )
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from .testers.Run import Run
 from .testers.ManualRun import ManualRun
@@ -143,8 +148,9 @@ class CompetetionViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    def update(self,request,pk=None):
+    def update(self, request, *args, **kwargs):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
+
     def destroy(self,request,pk=None):
         return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
@@ -154,6 +160,39 @@ class ContestViewSet(ModelViewSet):
     serializer_class = ContestSerializer
     permission_classes = [IsSuperUserOrIsStaffUser]
 
+
+    def update(self,request,pk=None):
+        instance = get_object_or_404(Contests,pk=pk)
+        if change_contest_name(instance.name,request.data.get("name")) == None:
+            return Response(
+                {"detail":"Could Not Change the contest name"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = ContestSerializer(instance=instance,data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
+    
+    def retrieve(self, request,pk=None):
+        instance = get_object_or_404(Contests,pk=pk)
+        show_results = request.GET.get("results",None)
+        if show_results:
+            data = getLeaderBoardData(instance)
+            sorted_data = sortLeaderBoarddata(data)
+            return Response(
+                sorted_data,
+                status=status.HTTP_200_OK
+            )
+        else:
+            groups = instance.contest_groups_set.all()
+            serializer = ContestGroupSerializer(groups,many=True)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
 
     def create(self,request,*args,**kwargs):
         request.data["name"] = request.data["name"].replace(" ","_")
@@ -165,19 +204,21 @@ class ContestViewSet(ModelViewSet):
             serializer.data,
             status=status.HTTP_201_CREATED
         )
+    
+
     def destroy(self,request,pk=None):
         instance = self.get_object()
         delete_folder_for_contest(instance.name)
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
     def FinishContest(self):
         starred_contest = Contests.objects.get(starred=True,started=True)
         starred_contest.finished = True
         starred_contest.save()
 
 
-    def update(self,request,pk=None):
-        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
     @action(detail=False,methods=["POST"])
     def actions(self,request):
         action_data = request.data.get("action",None)

@@ -1,6 +1,5 @@
-### UPDATING THE QUESTION
 ### BETTER CACHING IMPLEMENTATION
-### SEPERATING THE VIEWS
+### checking the question before starting the contest
 ### IMPORT OS PROBLEM
 ### Debug in env
 ### better DB calculation, using aggregated 

@@ -1,11 +1,49 @@
 # Contest
 
 ## Endpoints
+* ### [ListContest](#)
+* ### [RetreiveContest]()
 * ### [CreateContest](#createcontest-1)
 * ### [DeleteContest](#deletecontest-1)
+* ### [UpdateContest](#updatecontest-1)
 * ### [ContestGroups](#contestgroups-1)
 * ### [Contestants](#contestants-1)
 * ### [Actions](#actions-1)
+
+
+
+# ListContest
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/
+```
+* #### Returns all the contests
+<hr>
+
+# RetreiveContest
+* #### [listgroups](#listgroups-1)
+* #### [listresults](#listresults-1)
+<br>
+
+* ### listgroups
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/<id>
+```
+* #### Returns the groups in that contest
+<br>
+
+* ### listresults
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/<id>?results=True
+```
+* #### Returns the results of that contest
+
+<hr>
 
 
 
@@ -17,6 +55,19 @@ POST api/contest/
 ```
 ```JSON
     "name":"Fall 2023"
+```
+* #### The Name Should Be Unique
+<hr>
+
+# UpdateContest
+* #### permissions : Admin
+* #### Endpoint : 
+```
+POST api/contest/<id>
+```
+```JSON
+	"name":"Autumn_2024",
+	"duration":"00:00:10"
 ```
 * #### The Name Should Be Unique
 <hr>

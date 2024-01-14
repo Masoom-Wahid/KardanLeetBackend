@@ -5,6 +5,7 @@
 * ### [ListQuestion](#list-questions)
 * ### [CreateQuestions](#create-questions)
 * ### [DeleteQuestions](#delete-questions)
+* ### [UpdateQuestion](#updating-questions)
 * ### [SampleTestCases](#sampletestcases-1)
 * ### [Constraints](#constraints-1)
 * ### [question_files](#questionsfiles)
@@ -47,6 +48,23 @@ POST api/questions/
 DEL api/questions/<id>
 ```
 * #### it will also delete all of the TESTCASE files if there is any
+<div class="break"></div>
+
+# <span class="text">Updating Questions<span>
+* #### Permissions : Admin
+* #### Endpoint: 
+```
+POST api/questions/<id>
+```
+```JSON
+	"contest":"Autumn_2022",
+	"title":"thisSum",
+	"lvl":"EASY",
+	"point":"20",
+	"time_limit":"10",
+	"description":"jama ko",
+	"num_of_test_cases":"3"
+```
 <div class="break"></div>
 
 # <span class="text">SampleTestCases<span>
