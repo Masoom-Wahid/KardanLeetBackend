@@ -3,10 +3,12 @@ import secrets
 from Contest.models import Contest_submissiosn
 from django.utils import timezone
 from datetime import timedelta
-from django.core import cache
+from django.core.cache import cache
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from Contest.tasks import scheduler
+from ..utils import getLeaderBoardData,sortLeaderBoarddata
+
 
 class SubmitRun(RunCode):
     def __init__(self,group,question,contest,language,file):
@@ -18,11 +20,16 @@ class SubmitRun(RunCode):
             question = question,
             lang=language,    
             code = "",
-            status=""
+            status="",
+            submit_time = self.getsubmitTime()
         )
+        self.group = group
         self.file = file
         self.num_of_test_cases=question.num_of_test_cases
         self.manual_testCase = None
+
+    def getsubmitTime(self):
+            return  (timezone.now() - self.group.contest.started_at).total_seconds()
 
     def makeId(self):
         token = secrets.token_urlsafe(16)
@@ -33,15 +40,17 @@ class SubmitRun(RunCode):
     def updateLeaderboard(self,instance):
         try:
             leaderboard_obj = cache.get("leaderboard")
+            stats = {
+                "id":self.group.id,
+                "point":self.group.calculateTotalPoint(),
+                "time":self.group.calculateTime(),
+                "penalty":self.group.calculatePenalty()
+            }
+            leaderboard_obj[self.group.group_name] = stats
+            print("from cache")
         except:
-            pass
-        stats = {
-            "id":self.group.id,
-            "point":self.group.calculateTotalPoint(),
-            "time":self.group.calculateTime(),
-            "penalty":self.group.calculatePenalty()
-        }
-        leaderboard_obj[self.group.group_name] = stats
+            leaderboard_obj = getLeaderBoardData(self.contest)
+            cache.set("leaderboard",leaderboard_obj,14400)
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
 

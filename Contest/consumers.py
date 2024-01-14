@@ -50,7 +50,6 @@ class LeaderboardConsumer(AsyncWebsocketConsumer):
 
         data = await getData()
         result = await sortdata(data)
-        print(data)
 
         #Sends The Previous Data
         await self.send(text_data=json.dumps({
