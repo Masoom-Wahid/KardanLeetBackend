@@ -61,7 +61,7 @@ class RunCode:
         _,error = process.communicate()
         if error:
             return False,{
-                "reason":"Error in here",
+                "reason":"Compilation Error",
                 "error":error.decode()
             }
         return True,name
@@ -79,7 +79,7 @@ class RunCode:
                 match = re.search(r'class (\w+)\b', contents)
                 current_class = match.group(1)
                 if self.language == "java":
-                    new_contents = contents.replace(f'class {current_class}', f'public class {filename[0:-5]}')
+                    new_contents = contents.replace(f'class {current_class}', f'class {filename[0:-5]}')
                 else:
                     new_contents = contents.replace(f'class {current_class}', f'class {filename[0:-5]}')
                 f.seek(0)

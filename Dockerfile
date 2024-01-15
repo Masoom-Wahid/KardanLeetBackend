@@ -1,4 +1,4 @@
-FROM python:3
+FROM python:3 AS Base
 
 # Install system dependencies
 RUN pip install --upgrade pip
@@ -16,6 +16,7 @@ RUN npm install -g typescript
 # Set the working directory
 WORKDIR /usr/src/app
 
+FROM base AS final
 # Copy the requirements file
 COPY requirments.txt ./
 

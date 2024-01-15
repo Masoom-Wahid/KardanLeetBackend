@@ -14,7 +14,8 @@ from .utils import (create_folder_for_contest
                     ,delete_folder_for_contest
                     ,change_contest_name
                     ,sortLeaderBoarddata,
-                    getLeaderBoardData
+                    getLeaderBoardData,
+                    check_question_files
                     )
 from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from .testers.Run import Run
@@ -236,6 +237,11 @@ class ContestViewSet(ModelViewSet):
             if typeof == "start":
                 if action == "do":
                     if contest_instance.started == True and contest_instance.starred != False:
+                        if check_question_files(contest_instance):
+                            return Response(
+                                {"detail":"Make Sure You Uploaded All The Testcases for every question"},
+                                status=status.HTTP_400_BAD_REQUEST
+                            )
                         contest_instance.started = True
                         contest_instance.started_at = timezone.now()
                         run_at = timezone.now() + contest_instance.duration
@@ -251,6 +257,7 @@ class ContestViewSet(ModelViewSet):
                 if action == "do" : 
                     contest_instance.starred = False 
                     try:
+                        Contest_submissiosn.objects.filter(group__contest=contest_instance).delete()
                         scheduler.remove_job("Contest_Listener")
                     except:
                         pass

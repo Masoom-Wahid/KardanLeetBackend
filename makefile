@@ -6,15 +6,23 @@ REQUIREMENTS := requirments.txt
 OS := $(shell uname -s)
 
 
-.PHONY: docker-run change
+.PHONY: docker-run change install-from-venv
 
 default: build docker-run
+
+install-from-venv: install-requirements makemigrations migrate su runserver
 
 build:
 	docker build --tag contest .
 
 docker-run:
 	docker run --publish 8000:8000 contest
+
+docker-stop:
+	docker image stop contest
+
+docker-remove:
+	docker image rm -f contest
 
 change:
 	docker build --tag contest .

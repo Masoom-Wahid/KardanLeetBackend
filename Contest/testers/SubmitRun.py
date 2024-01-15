@@ -38,8 +38,8 @@ class SubmitRun(RunCode):
         return token
 
     def updateLeaderboard(self,instance):
-        try:
-            leaderboard_obj = cache.get("leaderboard")
+        leaderboard_obj = cache.get("leaderboard")
+        if leaderboard_obj != None:
             stats = {
                 "id":self.group.id,
                 "point":self.group.calculateTotalPoint(),
@@ -48,8 +48,8 @@ class SubmitRun(RunCode):
             }
             leaderboard_obj[self.group.group_name] = stats
             print("from cache")
-        except:
-            leaderboard_obj = getLeaderBoardData(self.contest)
+        else:
+            leaderboard_obj = getLeaderBoardData(self.group.contest)
             cache.set("leaderboard",leaderboard_obj,14400)
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
