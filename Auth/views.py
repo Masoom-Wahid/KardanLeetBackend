@@ -1,7 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth.models import User
-from .serializers import UserSerializer
+from .serializers import UserSerializer,MyTokenObtainPairSerializer
 from Contest.serializers import ContestantsSerializer
 from .permissions import IsSuperUserOrIsStaffUser
 from rest_framework import status
@@ -10,7 +10,16 @@ from rest_framework.permissions import AllowAny
 from .utils import generate_user_for_contest
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.views import TokenViewBase
 
+
+class TokenObtainPairView(TokenViewBase):
+    """
+    Takes a set of user credentials and returns an access and refresh JSON web
+    token pair to prove the authentication of those credentials.
+    """
+
+    serializer_class = MyTokenObtainPairSerializer
 
 class UserViewSet(ModelViewSet):
     queryset = User.objects.all()

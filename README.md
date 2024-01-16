@@ -89,8 +89,6 @@ make check-compilers
 
 * ##### :white_check_mark: If Passed All The TestCases Start Reading API Documenation From [Here](./docs/Introduction.md)
 * ##### :x: If Not Install The Said Compilers You Do Not Have
-##### :white_check_mark: If Passed All The TestCases , Start Reading API Documenation From [Here](./docs/Introduction.md)
-##### :x: If Not Install The Said Compilers You Do Not Have
 <hr>
 
 
