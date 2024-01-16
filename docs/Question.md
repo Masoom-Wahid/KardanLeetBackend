@@ -30,6 +30,7 @@ POST api/questions/
 ```
 * #### time_limit is not mandatory , if not given it will be defaulted to 10
 ```JSON
+    "name":"Autumn2022",
     "title":"Factorial",
     "lvl":"EASY",
     "point":"10",
