@@ -38,10 +38,13 @@ class CompetetionViewSet(ModelViewSet):
     def list(self,request):
         #TODO : Make this with caching
         instance = get_object_or_404(Contests,starred=True)
-        questions = Contest_Question.objects.filter(contest=instance)
+        questions = Contest_Question.objects.filter(contest=instance).order_by("point")
         serializer = ContestQuestionSerializer(questions,many=True)
         return Response(
-            serializer.data,
+            {
+            "name":instance.name,
+            "data":serializer.data,
+            },
             status=status.HTTP_200_OK
         )
     
@@ -236,8 +239,8 @@ class ContestViewSet(ModelViewSet):
             """Change The Contest Based On The Request"""
             if typeof == "start":
                 if action == "do":
-                    if contest_instance.started == True and contest_instance.starred != False:
-                        if check_question_files(contest_instance):
+                    if contest_instance.started == False and contest_instance.starred == True:
+                        if not check_question_files(contest_instance):
                             return Response(
                                 {"detail":"Make Sure You Uploaded All The Testcases for every question"},
                                 status=status.HTTP_400_BAD_REQUEST
@@ -255,7 +258,7 @@ class ContestViewSet(ModelViewSet):
                 elif action == "resume" : contest_instance.starred = True ; scheduler.resume_job("Contest_Listener")
             if typeof == "reset":
                 if action == "do" : 
-                    contest_instance.starred = False 
+                    contest_instance.started = False 
                     try:
                         Contest_submissiosn.objects.filter(group__contest=contest_instance).delete()
                         scheduler.remove_job("Contest_Listener")
@@ -310,7 +313,6 @@ class ContestViewSet(ModelViewSet):
     def contestants(self,request):
         method = request.method
         if method == "GET":
-            print("here")
             group = get_object_or_404(Contest_Groups,id=request.GET.get("id",None))
             instance = Contestants.objects.filter(group=group)
             serializer = ContestantsSerializer(instance,many=True)

@@ -34,7 +34,7 @@ class ContestSubmissionSerializer(serializers.ModelSerializer):
 class ContestQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contest_Question
-        fields = ["id","title","lvl","description","num_of_test_cases"]
+        fields = ["id","title","lvl","time_limit","point","description","num_of_test_cases"]
 
 class ContestantsSerializer(serializers.ModelSerializer):
     group = serializers.SerializerMethodField()
