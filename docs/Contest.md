@@ -54,7 +54,8 @@ GET api/contest/<id>?results=True
 POST api/contest/
 ```
 ```JSON
-    "name":"Fall 2023"
+    "name":"Fall 2023",
+    "duration":"00:00:10"
 ```
 * #### The Name Should Be Unique
 <hr>
