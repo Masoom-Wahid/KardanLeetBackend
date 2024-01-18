@@ -18,11 +18,11 @@ class ManualRun(RunCode):
             "java": ["java", filename],
             "php": ["php", file],
             "c": ["./" + filename],
-            "c++": ["./" + filename],
+            "cpp": ["./" + filename],
             "rust": ["./" + filename],
             "c#": ["./" + filename + ".exe"],
-            "js": ["node", thispath],
-            "ts": ["node", thispath],
+            "javascript": ["node", thispath],
+            "typescript": ["node", thispath],
         }
 
         try:

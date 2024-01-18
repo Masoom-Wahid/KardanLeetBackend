@@ -81,6 +81,7 @@ class QuestionViewSet(ModelViewSet):
     def destroy(self, request,pk=None):
         question = get_object_or_404(Contest_Question,id=pk)
         delete_folder_for_contest(question.contest.name,question.title)
+        question.delete()
         return Response(
             status=status.HTTP_204_NO_CONTENT
         )

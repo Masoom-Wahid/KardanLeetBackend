@@ -56,13 +56,13 @@ GET api/competition/<question_id>?submissions=True&id=<submissions_id>
 * ### Before We Begin , here is the lanuages and their synonyms which we will use
 ```JSON
     "python":"python",
-    "javascript":"js",
-    "typescript":"ts",
+    "javascript":"javascript",
+    "typescript":"typescript",
     "php":"php",
     "rust":"rust",
     "c#":"c#",
     "c":"c",
-    "c++":"c++",
+    "c++":"cpp",
     "java":"java"
 ```
 <br>

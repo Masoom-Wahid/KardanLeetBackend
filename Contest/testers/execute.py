@@ -23,7 +23,7 @@ class RunCode:
         self.time_limit = question.time_limit
         self.last_solved = 0
         self.file = file,
-        self.executableFiles = ["java","c","c++","ts","rust","c#"]
+        self.executableFiles = ["java","c","cpp","ts","rust","c#"]
     
 
     def MakeExecutable(self,filepath,filename,lang):
@@ -42,7 +42,7 @@ class RunCode:
                 "name":filename[:-2],
                 "exec_code":['g++', filename,"-o",filename[:-2]]
             },
-            "c++":{
+            "cpp":{
                 "name":filename[:-4],
                 "exec_code":['g++', filename,"-o",filename[:-4]]
             },
@@ -121,7 +121,7 @@ class RunCode:
             "java": ["java", filename],
             "php": ["php", file],
             "c": ["./" + filename],
-            "c++": ["./" + filename],
+            "cpp": ["./" + filename],
             "rust": ["./" + filename],
             "c#": ["./" + filename + ".exe"],
             "js": ["node", thispath],
@@ -175,7 +175,7 @@ class RunCode:
         suffixes = {
             "python":".py",
             "java":".java",
-            "c++":".cpp",
+            "cpp":".cpp",
             "c":".c",
             "js":".js",
             "ts":".ts",
