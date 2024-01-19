@@ -17,7 +17,7 @@ class Contests(models.Model):
     name = models.CharField(max_length=50,null=False,blank=False,unique=True)
     duration = models.DurationField()
     started = models.BooleanField(default=False)
-    started_at = models.DateTimeField()
+    started_at = models.DateTimeField(null=True,blank=True)
     starred = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
 

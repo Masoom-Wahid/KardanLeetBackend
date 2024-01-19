@@ -26,6 +26,30 @@ class QuestionViewSet(ModelViewSet):
     serializer_class = ContestQuestionsSerializer
     permission_classes = [IsSuperUserOrIsStaffUser]
     
+
+    def retrieve(self,request,pk=None):
+        question_instance = get_object_or_404(Contest_Question,id=pk)
+        avaialabe_test_cases = sample_test_cases_file.objects.filter(question=question_instance).count() // 2
+        files_required = avaialabe_test_cases < question_instance.num_of_test_cases
+        samples = sample_test_cases.objects.filter(question=question_instance)
+        constraints = Constraints.objects.filter(question=question_instance)
+        #Serializers
+        question_serializer = ContestQuestionsSerializer(question_instance,many=False)
+        samples_serializer = SampleTestCaseSerializer(samples,many=True)
+        constraints_serializer = ConstraintsSerializer(constraints,many=True)
+        return Response(
+            {
+            "question":question_serializer.data,
+            "testcases":{
+                "num_of_test_cases":question_instance.num_of_test_cases,
+                "avaialabe_test_cases":avaialabe_test_cases,
+                "files_required":files_required
+            },
+            "samples":samples_serializer.data,
+            "consts":constraints_serializer.data
+            },
+            status=status.HTTP_200_OK
+            )
     def list(self,request):
         contest_name = request.GET.get("name",None)
         if contest_name:
@@ -51,6 +75,12 @@ class QuestionViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         contest_instance = get_object_or_404(Contests,name=contest)
+        # if a question with the given in the same contest exists give an error
+        if Contest_Question.objects.filter(contest=contest_instance,title=request.data.get("title",None)).exists():
+            return Response(
+                {"detail":"A Question With The Given Name In This Contest Exists"},
+                status=status.HTTP_400_BAD_REQUEST
+                )
         serializer = ContestQuestionsCreatorSerializer(data=request.data,context = {
             "contest":contest_instance
         })
@@ -64,6 +94,12 @@ class QuestionViewSet(ModelViewSet):
     
     def update(self, request,pk=None):
         question = get_object_or_404(Contest_Question,id=pk)
+        # Check if a question with this name alredy exists
+        if Contest_Question.objects.filter(contest=contest_instance,title=request.data.get("title",None)).exists():
+            return Response(
+                {"detail":"A Question With The Given Name In This Contest Exists"},
+                status=status.HTTP_400_BAD_REQUEST
+                )
         """change the question folder name"""
         if change_question_name(question.contest.name,question.title,request.data.get("title")) == None:
             return Response(
@@ -98,25 +134,23 @@ class QuestionViewSet(ModelViewSet):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             else:
-                try:
-                    question_instance= Contest_Question.objects.get(id=question_id)
-                except Contest_Question.DoesNotExist:
-                    return Response(
-                        {"Detail":"Invalid ID"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
+                question_instance = get_object_or_404(Contest_Question,pk=question_id)
                 num_of_test_cases = question_instance.num_of_test_cases
-                file_names = [file.name for file in files]
-                for i in range(1,num_of_test_cases+1):
-                    if f"input{i}.txt" in file_names and f"output{i}.txt" in file_names:
-                        continue
-                    else:
-                        return Response(
-                            {"detail":"Make Sure You Have The Files Lined Up From input1.txt , output1.txt and in order"},
-                            status=status.HTTP_400_BAD_REQUEST
+                avaialabe_test_cases = sample_test_cases_file.objects.filter(question=question_instance).count()
+                if num_of_test_cases <= avaialabe_test_cases // 2:
+                    return Response(
+                        {"detail":"TestCases Has Already Been Uploaded"},
+                        status=status.HTTP_400_BAD_REQUEST
                         )
-                    
+                file_names = [f"input{(avaialabe_test_cases+2)//2}.txt",
+                                f"output{(avaialabe_test_cases+2)//2}.txt"
+                ]
+                for file in files:
+                    if not file.name in file_names:
+                        return Response(
+                            {"Detail":"Invalid Naming Convention"},
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
                 for file in files:            
                     instance  = sample_test_cases_file.objects.create(
                         question = question_instance,
@@ -130,28 +164,30 @@ class QuestionViewSet(ModelViewSet):
                                     instance.question.title,
                                     file.name))
                     instance.save()
-
                 return Response(
                     status=status.HTTP_204_NO_CONTENT
                 )
         elif method == "PUT":
-            contest_name = request.data.get("contest",None)
             question_id = request.data.get("question",None)
             id = request.data.get("id",None)
-            file = request.FILES.get("file",None)
-            if question_id and contest_name:
-                contest_instance = get_object_or_404(Contests,name=contest_name)
+            input_file = request.FILES.get("input",None)
+            output_file = request.FILES.get("output",None)
+            if question_id and input_file and output_file:
                 question_instance = get_object_or_404(Contest_Question,pk=question_id)
                 try:
-                    filepath = os.path.join(settings.BASE_DIR,"files","contest",contest_instance.name,
+                    inputfilepath = os.path.join(settings.BASE_DIR,"files","contest",question_instance.contest.name,
                                                 question_instance.title,
-                                                f"{contest_instance.name}__{question_instance.title}__{id}.txt")
-                    with open(filepath,"w") as past_file:
-                        past_file.write(file.read().decode())
+                                                f"input{id}.txt")
+                    outputfilepath = os.path.join(settings.BASE_DIR,"files","contest",question_instance.contest.name,
+                                                question_instance.title,
+                                                f"output{id}.txt")
+                    with open(inputfilepath,"w") as past_input_file:
+                        past_input_file.write(input_file.read().decode())
+                    with open(outputfilepath,"w") as past_output_file:
+                        past_output_file.write(output_file.read().decode())
 
-                    data = file.read().decode()
                     return Response(
-                        {"data":data},
+                        {"data":"ok"},
                         status=status.HTTP_200_OK
                     )
                 except Exception as e:
@@ -161,31 +197,39 @@ class QuestionViewSet(ModelViewSet):
                     )
             else:
                 return Response(
-                    {"detail":"contest(contest_name) and question(question_id)required"},
+                    {"detail":" question(question_id) and input_file and output_file required"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
         elif method == "GET":
-            contest_name = request.GET.get("contest",None)
             question_id = request.GET.get("question",None)
             id = request.GET.get("id",None)
-            if question_id and contest_name:
-                contest_instance = get_object_or_404(Contests,name=contest_name)
+            if question_id:
                 question_instance = get_object_or_404(Contest_Question,pk=question_id)
+                files_required = sample_test_cases_file.objects.filter(question=question_instance).count() < question_instance.num_of_test_cases
                 if not id:
                     return Response(
-                        {"testCases":question_instance.num_of_test_cases},
+                        {"testCases":question_instance.num_of_test_cases,
+                        "files_required":files_required
+                        },
                         status=status.HTTP_200_OK
                     )
                 else:
                     try:
-                        filepath = os.path.join(settings.BASE_DIR,"files","contest",contest_instance.name,
+                        inputfilepath = os.path.join(settings.BASE_DIR,"files","contest",question_instance.contest.name,
                                                 question_instance.title,
-                                                f"{contest_instance.name}__{question_instance.title}__{id}.txt")
-                        with open(filepath,"r") as file:
-                            data = file.read()
+                                                f"input{id}.txt")
+                        ouputfilepath = os.path.join(settings.BASE_DIR,"files","contest",question_instance.contest.name,
+                                                question_instance.title,
+                                                f"output{id}.txt")
+                        with open(inputfilepath,"r") as file:
+                            inputdata = file.read()
+                        with open(ouputfilepath,"r") as file:
+                            outputdata = file.read()
                         return Response(
-                            {"data":data},
+                            {"input":inputdata,
+                            "output":outputdata
+                            },
                             status=status.HTTP_200_OK
                         )
                     except Exception as e:
@@ -195,7 +239,7 @@ class QuestionViewSet(ModelViewSet):
                         )
             else:
                 return Response(
-                    {"detail":"contest(contest_name) and question(question_id)required"},
+                    {"detail":"question(question_id)required"},
                     status=status.HTTP_400_BAD_REQUEST
                 )
 
