@@ -94,12 +94,14 @@ class QuestionViewSet(ModelViewSet):
     
     def update(self, request,pk=None):
         question = get_object_or_404(Contest_Question,id=pk)
+        contest_instance = get_object_or_404(Contests,name=request.data.get("contest"))
         # Check if a question with this name alredy exists
-        if Contest_Question.objects.filter(contest=contest_instance,title=request.data.get("title",None)).exists():
-            return Response(
-                {"detail":"A Question With The Given Name In This Contest Exists"},
-                status=status.HTTP_400_BAD_REQUEST
-                )
+        if question.title != request.data.get("title"):  
+            if Contest_Question.objects.filter(contest=contest_instance,title=request.data.get("title")).exists():
+                return Response(
+                    {"detail":"A Question With The Given Name In This Contest Exists"},
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
         """change the question folder name"""
         if change_question_name(question.contest.name,question.title,request.data.get("title")) == None:
             return Response(

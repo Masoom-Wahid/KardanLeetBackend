@@ -27,7 +27,6 @@ class ContestQuestionsCreatorSerializer(serializers.ModelSerializer):
 
     def create(self,validated_data):
         contest = self.context["contest"]
-        validated_data["title"] = validated_data["title"].replace(" ","_")
         instance = Contest_Question.objects.create(
             contest = contest,
             **validated_data

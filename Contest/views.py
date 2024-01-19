@@ -205,7 +205,6 @@ class ContestViewSet(ModelViewSet):
             )
 
     def create(self,request,*args,**kwargs):
-        request.data["name"] = request.data["name"].replace(" ","_")
         serializer = ContestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
