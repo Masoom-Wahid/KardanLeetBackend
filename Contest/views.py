@@ -27,13 +27,17 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from .tasks import scheduler
 from django.conf import settings
-
+from cryptography.fernet import Fernet
+from math import ceil
+from django.db.models import Q
+from django.db.models import Count, Sum, Case, When
 
 class CompetetionViewSet(ModelViewSet):
     queryset = Contests.objects.filter(starred=True)
     serializer_class = ContestSerializer
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAuthenticated]
+
 
     def list(self,request):
         #TODO : Make this with caching
@@ -208,6 +212,8 @@ class ContestViewSet(ModelViewSet):
         serializer = ContestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
+        instance.key = str(Fernet.generate_key())[2:-1]
+        instance.save()
         create_folder_for_contest(instance.name)
         return Response(
             serializer.data,
@@ -218,6 +224,8 @@ class ContestViewSet(ModelViewSet):
     def destroy(self,request,pk=None):
         instance = self.get_object()
         delete_folder_for_contest(instance.name)
+        for group in Contest_Groups.objects.filter(contest=instance):
+            group.user.delete()
         instance.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
     
@@ -284,15 +292,150 @@ class ContestViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
                 )
     
-    @action(detail=False,methods=["POST"])
-    def groups(self,request):
-        contest = get_object_or_404(Contests,name=request.data.get("name",None))
-        instance = Contest_Groups.objects.filter(contest=contest)
-        serializer = ContestGroupSerializer(instance,many=True)
+    @action(detail=False,methods=["GET"])
+    def stats(self,request):
+        contest = request.GET.get("contest","starred")
+        if contest == "starred":
+            contest_instance = get_object_or_404(Contests,starred=True)
+        else:
+            contest_instance = get_object_or_404(Contests,name=contest)
+
+        previous_contest_groups = Contest_Groups.objects.exclude(contest=contest_instance).values('contest__name').annotate(
+    group_count=Count('id')
+)
+
+        status = Contest_Groups.objects.filter(contest=contest_instance).annotate(
+            group_count=Count('id'),
+            challenge_count=Count('contest__contest_question', distinct=True),
+            correct_answer_count=Sum(Case(When(contest_submissiosn__solved=True, then=1), default=0)),
+            incorrect_answer_count=Sum(Case(When(contest_submissiosn__solved=False, then=1), default=0))
+        ).values('group_count', 'challenge_count', 'correct_answer_count', 'incorrect_answer_count').first()
+
+        group_count = status['group_count']
+        challenge_count = status["challenge_count"]
+        correct_answer_count = status['correct_answer_count']
+        incorrect_answer_count = status['incorrect_answer_count']
+
         return Response(
-            serializer.data,
-            status=status.HTTP_200_OK
+            {
+                "previous_contest_groups":previous_contest_groups,
+                "current_group":group_count,
+                "challenges_count":challenge_count,
+                "correct_answers":correct_answer_count,
+                "incorrect_answer":incorrect_answer_count,
+            }
+            
         )
+            
+    
+
+
+
+
+
+    @action(detail=False,methods=["GET"])
+    def groups(self,request):
+        """
+        We Have 3 Probbabilties Here
+        You Want To See All Groups
+        You Want To See All Submissions of a group
+        You Want To See a submission detail of a submission
+        
+        """
+        MAXIMUM_PER_PAGE_ALLOWED = 6
+        page = int(request.GET.get("page",1))
+        group_id = request.GET.get("id",None)
+        if group_id:
+            """
+            if "id" is given , that means the user wants to see the submissions of a group,
+            now if "submission_id" is not given we render all submissions else we render that
+            particular submission
+            """
+            submission_id = request.GET.get("submission_id",None)
+            if submission_id:
+                instance = get_object_or_404(Contest_submissiosn,id=submission_id)
+                serializer = ContestSubmissionSerializer(instance,many=False,context={
+                    "showCode":True
+                })
+                return Response(
+                    serializer.data,
+                    status=status.HTTP_200_OK
+                )
+            else:
+                # Filters
+                solved = request.GET.get("solved","")
+                time = request.GET.get("time","")
+                lang = request.GET.get("lang","")
+
+                group_instance = get_object_or_404(Contest_Groups,id=group_id)
+
+                filter_conditions = Q(group=group_instance)
+                if lang:
+                    filter_conditions &= Q(lang=lang)
+                elif solved:
+                    filter_conditions &= Q(solved=solved)
+
+
+                if time == "earliest":
+                    instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("-submit_time")
+                else:
+                    instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("submit_time")
+
+                submissions_count = instance.count()
+                pages_count = ceil(submissions_count/MAXIMUM_PER_PAGE_ALLOWED)
+                if pages_count < page:
+                    return Response(
+                    {"detail":"Invalid Page Number"},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                index = (page  - 1 )* MAXIMUM_PER_PAGE_ALLOWED
+                if index + MAXIMUM_PER_PAGE_ALLOWED > submissions_count:
+                    last_index = submissions_count
+                else:
+                    last_index = index + MAXIMUM_PER_PAGE_ALLOWED
+
+                data = instance[index:last_index]
+                serializer = ContestSubmissionSerializer(data,many=True)
+
+                return Response(
+                    {
+                        "avaialabe_pages":pages_count,
+                        "submissions_count":submissions_count,
+                        "data":serializer.data
+                    },
+                    status=status.HTTP_200_OK
+                )
+        else:
+            """
+            else the user wants to see all groups
+            """
+            contest = get_object_or_404(Contests,name=request.GET.get("contest",None))
+            instance = Contest_Groups.objects.filter(contest=contest)
+            users_count = instance.count()
+            pages_count = ceil(users_count / MAXIMUM_PER_PAGE_ALLOWED)
+            if pages_count < page:
+                return Response(
+                    {"detail":"Invalid Page Number"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            index = (page  - 1 )* MAXIMUM_PER_PAGE_ALLOWED
+            if index + MAXIMUM_PER_PAGE_ALLOWED > users_count:
+                last_index = users_count
+            else:
+                last_index = index + MAXIMUM_PER_PAGE_ALLOWED
+
+            data = instance[index:last_index]
+            serializer = ContestGroupSerializer(data,many=True)
+
+            return Response(
+                {
+                    "avaialabe_pages":pages_count,
+                    "users_count":users_count,
+                    "data":serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
 
 
 

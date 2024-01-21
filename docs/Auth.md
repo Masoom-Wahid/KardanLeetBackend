@@ -5,6 +5,7 @@
 * ### [Creating Admins](#creating-admins)
 * ### [Creating ContestGroups](#contest-group-and-user-creation)
 * ### [Creating Alias For ContestGroups](#creating-alias)
+# ### [getCredentials]()
 
 <hr>
 
@@ -61,6 +62,33 @@ POST auth/users/alias/
     }
 ```
 * ##### Note: If There Is No Alias For The Given Group it will show the random generated one from when the group was created
+<hr>
+
+<hr>
+
+# Creating Alias
+* #### Permissions : Admin
+* ##### EndPoint:
+```shell
+GET auth/users/getcredentials?contest=Autumn2023&page=4
+```
+<br>
+
+* #### requires : contest and page
+* #### contest is mandatory but page is set default to 1
+* #### it should return smth like this
+```JSON
+    {
+        "avaialable_pages": "4",
+        "current_page": 4,
+        "result": {
+            "Autumn2023__61": "HA_BAjXZghi",
+            "Autumn2023__62": "EH_1xCeX9x2",
+            "Autumn2023__63": "EH_oaVrpXQO",
+            "Autumn2023__64": "HA_rjkWYkWB"
+        }
+    }
+```
 <hr>
 
 # Continue [here](./Question.md)

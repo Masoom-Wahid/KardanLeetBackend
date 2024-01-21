@@ -9,6 +9,7 @@
 * ### [ContestGroups](#contestgroups-1)
 * ### [Contestants](#contestants-1)
 * ### [Actions](#actions-1)
+* ### [Stats]()
 
 
 
@@ -84,17 +85,173 @@ POST api/contest/<id>
 # ContestGroups
 * #### permissions : Admin
 * #### Endpoint : 
+
+* ### [ListGroups](#list-groups)
+* ### [ListSubmissions](#list-submissions)
+* ### [SubmissionDetail]
+
+
+## LIST GROUPS
 ```
-POST api/contest/groups/
+GET api/contest/groups?contest=<contest_name>&page=<page_number>
 ```
+* ####  by default page is set to 1 , but contest is mandatory
+* #### the response should be smth like this
+* #### maximum of 6 groups allowed per pages
 ```JSON
-    "name":"Fall 2023"
+{
+	"avaialabe_pages": 11,
+	"data": [
+		{
+			"id": 107,
+			"group_name": "contestant__19",
+			"contest": 9,
+			"user": 111
+		},
+		{
+			"id": 108,
+			"group_name": "contestant__20",
+			"contest": 9,
+			"user": 112
+		},
+		{
+			"id": 109,
+			"group_name": "contestant__21",
+			"contest": 9,
+			"user": 113
+		},
+		{
+			"id": 110,
+			"group_name": "contestant__22",
+			"contest": 9,
+			"user": 114
+		},
+		{
+			"id": 111,
+			"group_name": "contestant__23",
+			"contest": 9,
+			"user": 115
+		},
+		{
+			"id": 112,
+			"group_name": "contestant__24",
+			"contest": 9,
+			"user": 116
+		}
+	]
+}
 ```
 
-* #### returns all the contest group in the given contest
+* #### returns all the contest group in the given contest according to their page number
 
+## LIST SUBMISSIONS
+### [FILTERS](#filters)
+```
+GET api/contest/groups?id=<group_id>&page=<page_number>
+```
+* ####  by default page is set to 1 , but id is mandatory
+* #### the response should be smth like this
+```JSON
+{
+	"avaialabe_pages": 3,
+	"submissions_count": 14,
+	"data": [
+		{
+			"id": "dzzrtKaEtHQ8mDy-AXgZ8w",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 282
+		},
+		{
+			"id": "UQGpUINreRl12YGWbwaMhw",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 281
+		},
+		{
+			"id": "kIgtue6mK2kOXKyzWgJTyA",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 278
+		},
+		{
+			"id": "8vDPVv2PXsDc0bZ-D8FJJg",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 276
+		},
+		{
+			"id": "2poq6wx2hsrxbjav31FukQ",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 273
+		},
+		{
+			"id": "tsGlLvkJpWlEf3uEZrUYiw",
+			"code": "",
+			"group": "contestant__1",
+			"question": "Palindrome",
+			"lang": "python",
+			"solved": true,
+			"status": "Solved",
+			"submit_time": 271
+		}
+	]
+}
+```
+* #### maximum of 6 submissions allowed per pages
+### FILTERS
+* #### solved -> "True" or "False"
+* #### time -> "earliest" or "oldest"
+* #### lang -> should be the lanuages listed in [here](./Competetion.md#testcode-1)
+* #### An Example EndPoint is Smth Like This
+```JSON
+GET api/contest/groups/?id=89&solved=True&lang=python&page=2&time=earliest
+```
+* #### Note that filters are not mandatory and nor is page, the page is set to 1 by default 
+* #### only id is mandatoy here
 <hr>
 
+## SUBMISSION DETAIL
+```
+GET api/contest/groups/?id=89&submission_id=tKIjSuOXwiYRLGDDy3lZGg
+```
+### It returns the detail of that submission
+### The Response should look smth like this
+```JSON
+{
+	"id": "tKIjSuOXwiYRLGDDy3lZGg",
+	"code": "# Do Not Print Unnecesary Stuff and let the input function to \n# empty or '' ie: input()\ntestcases = int(input())\nfor _ in range(testcases):\n    word = input()\n    # print(f\"word is {word} and revrse is {word[::-1]}\")\n    if word == word[::-1]:\n        print(\"True\")\n    else:\n        print(\"False\")",
+	"group": "contestant__1",
+	"question": "Palindrome",
+	"lang": "python",
+	"solved": true,
+	"status": "Solved",
+	"submit_time": 240
+}
+```
+
+<hr>
 
 # Contestants
 * #### [GetContestant](#getcontestant-1)
@@ -129,6 +286,33 @@ POST api/contest/contestants/
 ```
 DEL api/contest/contestants?id=<contestant_id>
 ``` 
+<hr>
+
+# Actions
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/stats/?contest=<contest_name>
+```
+* ### "contest" is not mandatory , if not given it will the return the stats of the "starred" contest
+* ### if given , it will return the result of that given contest
+
+* ### The Response Should Be Smth Like This
+```JSON
+{
+	"previous_contest_groups": [
+		{
+			"contest__name": "Autumn2024",
+			"group_count": 4
+		}
+	],
+	"current_group": 33,
+	"challenges_count": 1,
+	"correct_answers": 23,
+	"incorrect_answer": 10
+}
+```
+
 <hr>
 
 # Actions

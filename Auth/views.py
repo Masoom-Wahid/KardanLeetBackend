@@ -7,10 +7,11 @@ from .permissions import IsSuperUserOrIsStaffUser
 from rest_framework import status
 from Contest.models import Contests,Contest_Groups,Contestants
 from rest_framework.permissions import AllowAny
-from .utils import generate_user_for_contest
+from .utils import generate_user_for_contest,read_file
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.views import TokenViewBase
+from math import ceil
 
 
 class TokenObtainPairView(TokenViewBase):
@@ -34,7 +35,11 @@ class UserViewSet(ModelViewSet):
                 contest_id = request.data.get("contest_id")
                 contest_instance = get_object_or_404(Contests,id=contest_id)
                 startFrom = contest_instance.contest_groups_set.all().count() + 1
-                passwords = generate_user_for_contest(amount,startFrom,contest_instance.name,contest_instance)
+                passwords = generate_user_for_contest(amount,
+                                                      startFrom,
+                                                      contest_instance.name,
+                                                      contest_instance,
+                                                      )
                 return Response(
                     passwords,
                     status=status.HTTP_201_CREATED
@@ -73,6 +78,37 @@ class UserViewSet(ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+    @action(detail=False,methods=["GET"])
+    def getcredentials(self,request):
+        """
+        requires contest and page
+        returns the username and password from the credentials.txt file
+        """
+        MAXIMUM_PER_PAGE_ALLOWED = 20
+        contest_name = request.GET.get("contest",None)
+        page = int(request.GET.get("page",1))
+        if contest_name and page:
+            contest_instance = get_object_or_404(Contests,name=contest_name)
+            users_count = Contest_Groups.objects.filter(contest=contest_instance).count()
+            pages_count = ceil(users_count/MAXIMUM_PER_PAGE_ALLOWED)
+            if page > pages_count:
+                return Response(
+                    {"detail":f"Invalid Page,Avaiable Pages {pages_count}"}
+                ) 
+            result = read_file(contest_instance.key,contest_instance.name,page-1,users_count,MAXIMUM_PER_PAGE_ALLOWED)
+            return Response(
+                {
+                    "avaialable_pages":f"{pages_count}",
+                    "current_page":page,
+                    "result":result
+                },
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"detail":"contest required"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
     @action(detail=False,methods=["POST"])
     def alias(self,request):
         username = request.data.get("username",None)

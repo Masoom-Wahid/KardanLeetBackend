@@ -19,6 +19,7 @@ class Contests(models.Model):
     started = models.BooleanField(default=False)
     started_at = models.DateTimeField(null=True,blank=True)
     starred = models.BooleanField(default=False)
+    key = models.TextField(blank=False,null=False)
     finished = models.BooleanField(default=False)
 
     def calculateTotalPoints(self):

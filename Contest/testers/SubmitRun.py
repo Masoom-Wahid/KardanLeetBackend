@@ -47,7 +47,6 @@ class SubmitRun(RunCode):
                 "penalty":self.group.calculatePenalty()
             }
             leaderboard_obj[self.group.group_name] = stats
-            print("from cache")
         else:
             leaderboard_obj = getLeaderBoardData(self.group.contest)
             cache.set("leaderboard",leaderboard_obj,14400)
