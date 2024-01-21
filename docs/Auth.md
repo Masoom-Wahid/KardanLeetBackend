@@ -5,7 +5,7 @@
 * ### [Creating Admins](#creating-admins)
 * ### [Creating ContestGroups](#contest-group-and-user-creation)
 * ### [Creating Alias For ContestGroups](#creating-alias)
-# ### [getCredentials]()
+* ### [getCredentials](#get-credentials)
 
 <hr>
 
@@ -64,9 +64,8 @@ POST auth/users/alias/
 * ##### Note: If There Is No Alias For The Given Group it will show the random generated one from when the group was created
 <hr>
 
-<hr>
 
-# Creating Alias
+# GET CREDENTIALS
 * #### Permissions : Admin
 * ##### EndPoint:
 ```shell
