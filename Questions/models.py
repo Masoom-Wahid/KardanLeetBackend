@@ -1,9 +1,8 @@
-from Contest.models import Contests
 from django.db import models
 from Contest.models import Contest_Question
 
     
-class sample_test_cases(models.Model):
+class SampleTestCasesExample(models.Model):
     question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
     sample = models.CharField(max_length=70)
     answer = models.CharField(max_length=70)
@@ -18,9 +17,11 @@ class Constraints(models.Model):
     def __str__(self):
         return str(self.question.title)
 
-class sample_test_cases_file(models.Model):
+
+class SampleTestCases(models.Model):
     question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
-    test_case_file =models.FileField(upload_to="temp_files")
+    name = models.CharField(max_length=15)
+    testCase = models.TextField()
 
     def __str__(self):
-        return str(self.question.title)
+        return str(f"{self.question.title} -- {self.name} ")

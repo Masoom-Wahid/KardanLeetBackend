@@ -23,8 +23,8 @@ def change_question_name(contest_name,previous_question_name,new_question_name):
         print("Error Updating the folder name",e)
         return None
 
-def create_folder_for_questions(contest_name,questions_name):
-    path = os.path.join(settings.MEDIA_ROOT, f"contest/{contest_name}/{questions_name}")
+def create_folder_for_questions(questions_name):
+    path = os.path.join(settings.MEDIA_ROOT, f"Questions/{questions_name}")
     try:
         os.makedirs(path, exist_ok=True)
         print("---Created A Dir For The Question---")

@@ -13,20 +13,10 @@ class ManualRun(RunCode):
     def runCode(self,file,filename,lang):
         thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
         os.chdir(os.path.dirname(thispath))
-        language_commands = {
-            "python": ["python3", file],
-            "java": ["java", filename],
-            "php": ["php", file],
-            "c": ["./" + filename],
-            "cpp": ["./" + filename],
-            "rust": ["./" + filename],
-            "c#": ["./" + filename + ".exe"],
-            "javascript": ["node", thispath],
-            "typescript": ["node", thispath],
-        }
+        command = super().getLanguageCommands(lang,filename,file,thispath)
 
         try:
-            process = subprocess.Popen(language_commands.get(lang, []),stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+            process = subprocess.Popen(command,stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
  
             input_data = self.manual_testCase.encode()
             try:

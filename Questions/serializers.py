@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import sample_test_cases,Constraints
+from .models import SampleTestCasesExample,Constraints,SampleTestCases
 from Contest.models import Contest_Question
 
 
@@ -11,10 +11,17 @@ class ContestQuestionsSerializer(serializers.ModelSerializer):
     def get_contest(self,obj):
         return obj.contest.name
     
+
 class SampleTestCaseSerializer(serializers.ModelSerializer):
     class Meta:
-        model = sample_test_cases
+        model = SampleTestCases
         fields = '__all__'
+class SampleTestCasesExampleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SampleTestCasesExample
+        fields = '__all__'
+
+    
 class ContestQuestionsCreatorSerializer(serializers.ModelSerializer):
     contest = serializers.SerializerMethodField()
     class Meta:
@@ -24,14 +31,6 @@ class ContestQuestionsCreatorSerializer(serializers.ModelSerializer):
 
     def get_contest(self,obj):
         return obj.contest.name
-
-    def create(self,validated_data):
-        contest = self.context["contest"]
-        instance = Contest_Question.objects.create(
-            contest = contest,
-            **validated_data
-        )
-        return instance
 
 
 class ConstraintsSerializer(serializers.ModelSerializer):

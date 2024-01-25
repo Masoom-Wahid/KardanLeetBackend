@@ -24,7 +24,7 @@ def read_file(key,contest_name,page,users_count,MAXIMUM_PER_PAGE_ALLOWED):
     else:
         last_index = index+MAXIMUM_PER_PAGE_ALLOWED 
 
-    file_path = os.path.join(settings.BASE_DIR,"files","contest",contest_name,"credentials.txt")
+    file_path = os.path.join(settings.BASE_DIR,"files","Contest","Credentials",f"{contest_name}__credentials.txt")
     with open(file_path,"rb") as file:
         previous_encrypted_data = file.read()
 
@@ -63,7 +63,7 @@ def decrypt_file(key,encrypted):
 
 
 def write_credentials_file(key,contest_name,data,action):
-    file_path = os.path.join(settings.BASE_DIR,"files","contest",contest_name,"credentials.txt")
+    file_path = os.path.join(settings.BASE_DIR,"files","Contest","Credentials",f"{contest_name}__credentials.txt")
     # If The credentials.txt file is already created then we read and update the data based on that
     if action == "update":
         with open(file_path,"rb") as file:

@@ -82,7 +82,7 @@ GET auth/users/getcredentials?contest=Autumn2023&page=4
         "current_page": 4,
         "result": {
             "Autumn2023__61": "HA_BAjXZghi",
-            "Autumn2023__62": "EH_1xCeX9x2",
+            "Autumn2023__62": "MW_1xCeX9x2",
             "Autumn2023__63": "EH_oaVrpXQO",
             "Autumn2023__64": "HA_rjkWYkWB"
         }

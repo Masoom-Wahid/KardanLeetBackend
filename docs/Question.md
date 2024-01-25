@@ -16,8 +16,10 @@
 ### Permissions : Admin
 ### Endpoint:
 ```
-GET api/questions?name=<contestname>
+GET api/questions?name=<contestname>&page=2
 ```
+#### name is not mandatory , if not given it will return all the questions
+#### page is not mandatory , if not given it will be set to 1
 #### returns all the questions in the given contest
 <div class="break"></div>
 
@@ -140,37 +142,37 @@ DEL api/questions/constraints/<id>
 * #### Permissions : Admin
 * #### Endpoint: 
 ```
-POST api/questions/files/
+POST api/questions/testcases/
 ```
-* #### requires -> id(question_id),files
-* #### it should multipart not JSON
+* #### requires -> id(question_id),input and output
 <br>
 
 ```JSON
-    "id":"1",
-    "files":"input1.txt",
-    "files":"output1.txt",
+    {
+        "id":"1",
+        "input":"3\n3\n4\n5\n",
+        "output":"6\n24\n120"
+    }
 ```
 
-* #### For Every request the input and output pair should be like above and they should be in order meaning
-* #### if u have already sent input1 and outpu1 , it is time for input2 and output2
+* ### it will return 400 if the testcases are already complete
 <br>
 <div class="break"></div>
 
 * #### Endpoint : if u want to see the num of testcases of a question and if the testcases exists 
 * #### and number of avaialable testcases
 ```
-GET api/questions/files?question=<question_id>
+GET api/questions/testcases?question=<question_id>
 ```
 * #### this just returns a number which is the num of testCases
 <div class="break"></div>
 
 * #### Endpoint : if u want to see the data of a file in the question's testcases
 ```
-GET api/questions/files?question=<question_id>&id=<testfile_id>
+GET api/questions/testcases?question=<question_id>&id=<testfile_id>
 ```
 
-* #### id should be smth like this : if u want to see input1 then id is 1 so it is the naming convention from before but just the number
+* #### id should be smth like this : if u want to see input1 and output1 then id is 1 so it is the naming convention from before but just the number
 
 <div class="break"></div>
 
@@ -184,10 +186,12 @@ PUT api/questions/files/
 <br>
 
 ```JSON
-    "id":"1",
-    "input":"input1.txt",
-    "output" : "output1.txt"
-    "question":"13",
+    {
+        "id":"1",
+        "question":"1",
+        "input":"4\n3\n3\n4\n5\n",
+        "output":"6\n6\n24\n120"
+    }
 ```
 
 * #### it changes the said file to that given file

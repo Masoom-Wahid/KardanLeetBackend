@@ -3,12 +3,12 @@ from django.conf import settings
 import shutil
 from collections import OrderedDict
 from .models import Contest_Question
-from Questions.models import sample_test_cases_file
+from Questions.models import SampleTestCases
 
 def check_question_files(contest):
     contest_questions = Contest_Question.objects.filter(contest=contest)
     for question in contest_questions:
-        has_file = sample_test_cases_file.objects.filter(question=question).exists()
+        has_file = SampleTestCases.objects.filter(question=question).count() >= question.num_of_test_cases
         if not has_file:
             return False
     return True

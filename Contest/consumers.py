@@ -12,13 +12,16 @@ from .utils import getLeaderBoardData,sortLeaderBoarddata
 
 @sync_to_async
 def validate_user(hashId,access_token):
-    decoded_token = AccessToken(access_token)
-    user_instance = User.objects.get(id=decoded_token["user_id"])
-    if user_instance.is_superuser:
-        return [True,user_instance] 
-    else:
-        return [False,""]
-    
+    try:
+        decoded_token = AccessToken(access_token)
+        user_instance = User.objects.get(id=decoded_token["user_id"])
+        if user_instance.is_superuser:
+            return [True,user_instance] 
+        else:
+            return [False,""]
+    except Exception as e:
+        print(e)
+        return [False,e]
 @sync_to_async
 def sortdata(data):
     sorted_data = sortLeaderBoarddata(data)

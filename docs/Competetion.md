@@ -60,7 +60,7 @@ GET api/competition/<question_id>?submissions=True&id=<submissions_id>
     "typescript":"typescript",
     "php":"php",
     "rust":"rust",
-    "c#":"c#",
+    "csharp":"csharp",
     "c":"c",
     "c++":"cpp",
     "java":"java"

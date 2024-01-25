@@ -5,9 +5,9 @@ from .serializers import (ContestantsSerializer,
                           ContestGroupSerializer,
                           ContestQuestionSerializer,
                           ContestSubmissionSerializer)
-from rest_framework.permissions import IsAdminUser , IsAuthenticated,AllowAny
+from rest_framework.permissions import  IsAuthenticated
 from rest_framework import status
-from Questions.serializers import SampleTestCaseSerializer
+from Questions.serializers import SampleTestCasesExampleSerializer
 from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import (create_folder_for_contest
@@ -88,8 +88,8 @@ class CompetetionViewSet(ModelViewSet):
             )
         else:
             serializer = ContestQuestionSerializer(question,many=False)
-            sample_test_cases = question.sample_test_cases_set.all()
-            sample_serilizer = SampleTestCaseSerializer(sample_test_cases,many=True)
+            sample_test_cases = question.sampletestcasesexample_set.all()
+            sample_serilizer = SampleTestCasesExampleSerializer(sample_test_cases,many=True)
             return Response(
                 {
                     "question":serializer.data,
@@ -214,7 +214,6 @@ class ContestViewSet(ModelViewSet):
         instance = serializer.save()
         instance.key = str(Fernet.generate_key())[2:-1]
         instance.save()
-        create_folder_for_contest(instance.name)
         return Response(
             serializer.data,
             status=status.HTTP_201_CREATED
@@ -223,7 +222,6 @@ class ContestViewSet(ModelViewSet):
 
     def destroy(self,request,pk=None):
         instance = self.get_object()
-        delete_folder_for_contest(instance.name)
         for group in Contest_Groups.objects.filter(contest=instance):
             group.user.delete()
         instance.delete()
@@ -235,6 +233,27 @@ class ContestViewSet(ModelViewSet):
         starred_contest.finished = True
         starred_contest.save()
 
+
+    @action(detail=False,methods=["POST"])
+    def setQuestions(self,request):
+        contest_name = request.data.get("name",None)
+        questions_ids = request.data.get("ids",None)
+        if questions_ids:
+            conetst_instance = get_object_or_404(Contests,name=contest_name)
+            ids = questions_ids.split(",")[:-1]
+            print(ids)
+            questions = Contest_Question.objects.filter(id__in=ids)
+            if any(question is None for question in questions):
+                return Response(
+                    {"detail":"Invalid ID"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            else:
+                conetst_instance.contest_question_set.set(ids)
+                conetst_instance.save()
+                return Response(
+                    status=status.HTTP_204_NO_CONTENT
+                )
 
     @action(detail=False,methods=["POST"])
     def actions(self,request):
@@ -319,10 +338,13 @@ class ContestViewSet(ModelViewSet):
         return Response(
             {
                 "previous_contest_groups":previous_contest_groups,
-                "current_group":group_count,
-                "challenges_count":challenge_count,
-                "correct_answers":correct_answer_count,
-                "incorrect_answer":incorrect_answer_count,
+                "current_contest" : {
+                "Active Contestants":group_count,
+                "Number of Challenges":challenge_count,
+                "Correct Answers":correct_answer_count,
+                "Incorrect Answers":incorrect_answer_count,
+                }
+
             }
             
         )

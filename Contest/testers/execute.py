@@ -3,10 +3,7 @@ import os
 from django.conf import settings
 import re
 import random, string
-from Contest.tasks import scheduler
-from django.utils import timezone
-from datetime import timedelta
-from django.core.cache import cache
+from Questions.models import SampleTestCases
 
 class RunCode:
     def __init__(self,
@@ -17,13 +14,14 @@ class RunCode:
                  file
                  ):
         self.group = group
+        self.question = question
         self.contest_name = contest.name 
         self.question_name = question.title
         self.language = language
         self.time_limit = question.time_limit
         self.last_solved = 0
         self.file = file,
-        self.executableFiles = ["java","c","cpp","typescript","rust","c#"]
+        self.executableFiles = ["java","c","cpp","typescript","rust","csharp"]
     
 
     def MakeExecutable(self,filepath,filename,lang):
@@ -34,7 +32,7 @@ class RunCode:
                 "name":filename,
                 "exec_code":['javac', filepath]
             },
-            "c#":{
+            "csharp":{
                 "name":filename[:-3],
                 "exec_code":["mcs",filename]
             },
@@ -113,9 +111,7 @@ class RunCode:
     """Used For Deleting the processed files"""
     deleteFile = lambda self,filename : os.remove(os.path.join("/",filename))
     
-    def runCode(self,inputname,outputname,file,filename,lang):
-        thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
-        os.chdir(os.path.dirname(thispath))
+    def getLanguageCommands(self,lang,filename,file,path):
         language_commands = {
             "python": ["python3", file],
             "java": ["java", filename],
@@ -123,19 +119,22 @@ class RunCode:
             "c": ["./" + filename],
             "cpp": ["./" + filename],
             "rust": ["./" + filename],
-            "c#": ["./" + filename + ".exe"],
-            "javascript": ["node", thispath],
-            "typescript": ["node", thispath],
+            "csharp": ["./" + filename + ".exe"],
+            "javascript": ["node", path],
+            "typescript": ["node", path],
         }
+        return language_commands[lang]
+
+    def runCode(self,inputData,expectedOutputData,file,filename,lang):
+        thispath = os.path.join(settings.BASE_DIR,"Contest","testers",filename)
+        os.chdir(os.path.dirname(thispath))
+
+        command = self.getLanguageCommands(lang,filename,file,thispath)
 
         try:
-            process = subprocess.Popen(language_commands.get(lang, []),stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
-            path = os.path.join(settings.BASE_DIR,"files","contest",self.contest_name,self.question_name)
-            os.chdir(path)
-            with open(inputname, 'r') as input_file:
-                    input_data = input_file.read().encode()
+            process = subprocess.Popen(command,stdin=subprocess.PIPE, stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             try:
-                output, error = process.communicate(input_data,timeout=self.time_limit)
+                output, error = process.communicate(inputData,timeout=self.time_limit)
             except subprocess.TimeoutExpired:
                 process.kill()
                 return False,{
@@ -146,23 +145,22 @@ class RunCode:
                 "reason":"Error",
                 "error":str(error)
             }
-            with open(outputname, 'r') as output_file:
-                expected_output = output_file.read()
             
             """Only Print the Ouputs to the terminal when u are in debug mode"""
             if settings.DEBUG:
-                print(f"expected_output was : {expected_output.strip()}")
-                print()
-                print(f"your output was {output.decode().strip()}")
+                print(f"expected_output was : \n{str(expectedOutputData).strip()}")
+                print(f"your output was:  \n{str(output.decode()).strip()}")
+
             
-            if output.decode().strip() == expected_output.strip():
-                return True,{}
+            if output.decode().strip() == str(expectedOutputData).strip():
+                return True, {}
             else:
-                return False,{
-                    "reason":"InvalidAnswer",
-                    "output":output.decode().strip(),
-                    "expected_output":expected_output.strip()
+                return False, {
+                    "reason": "InvalidAnswer",
+                    "output": output.decode().strip(),
+                    "expected_output": str(expectedOutputData).strip()
                 }
+
         except Exception as e:
             return False,{
                 "reason":"Exception",
@@ -181,7 +179,7 @@ class RunCode:
             "typescript":".ts",
             "php":".php",
             "rust":".rs",
-            "c#":".cs"
+            "csharp":".cs"
         }
         extension = suffixes[self.language]
         # Create the file in disk so that we can run it
@@ -210,7 +208,7 @@ class RunCode:
         if self.language in self.executableFiles:
             if self.language == "java":
                 filename = filename+".class"
-            if self.language == "c#":
+            if self.language == "csharp":
                 filename = filename + ".exe"
             self.deleteFile(os.path.join(settings.BASE_DIR,"Contest","testers",filename))
 
@@ -220,11 +218,15 @@ class RunCode:
             return False,compileDetail
         file = compileDetail["file"]
         filename = compileDetail["filename"]
+        testCasesData = {}
+        testCases = SampleTestCases.objects.filter(question=self.question)
+        for testcase in testCases:
+            testCasesData[testcase.name] = testcase.testCase.replace('\r\n', '\n')
         # we loop on the number of testcases
         for i in range(1,self.num_of_test_cases+1):
             result ,detail = self.runCode(
-                f"input{i}.txt"
-                ,f"output{i}.txt"
+                bytes(testCasesData[f'input{i}'].encode())
+                ,f"{testCasesData[f'output{i}']}"
                 ,file
                 ,filename
                 ,self.language

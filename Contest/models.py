@@ -56,13 +56,14 @@ class Contestants(models.Model):
         return str(self.name)
     
 class Contest_Question(models.Model):
-    contest = models.ForeignKey(Contests,on_delete=models.CASCADE)
-    title = models.CharField(max_length=40)
+    contest = models.ManyToManyField(Contests)
+    title = models.CharField(max_length=40,unique=True)
     lvl = models.CharField(max_length=20,choices=QUESTION_LEVELS)
     point = models.IntegerField()
     description = models.TextField()
     time_limit = models.IntegerField(default=10)
     num_of_test_cases = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
     
     def is_solved(self):
         solved = self.Contest_submissiosn_set.filter(solved=True)

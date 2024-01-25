@@ -23,6 +23,7 @@ pycparser==2.21
 pyjnius==1.6.1
 PyJWT==2.8.0
 pyOpenSSL==23.3.0
+python-dotenv==1.0.1
 pytz==2023.3.post1
 service-identity==23.1.0
 six==1.16.0

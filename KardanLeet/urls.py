@@ -5,7 +5,7 @@ from rest_framework import routers
 
 from Auth.views import UserViewSet
 from Contest.views import ContestViewSet,CompetetionViewSet
-from Questions.views import QuestionViewSet,ConstraintViewSet,SampleTestCasesViewSet
+from Questions.views import QuestionViewSet,ConstraintViewSet,SampleTestCasesExampleViewSet
 router = routers.DefaultRouter()
 
 router.register(r"auth/users", UserViewSet)
@@ -13,7 +13,7 @@ router.register(r"contest", ContestViewSet)
 router.register(r"questions", QuestionViewSet)
 router.register(r"competition",CompetetionViewSet)
 router.register(r"constraints",ConstraintViewSet)
-router.register(r"samples",SampleTestCasesViewSet)
+router.register(r"samples",SampleTestCasesExampleViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),

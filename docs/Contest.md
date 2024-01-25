@@ -9,7 +9,8 @@
 * ### [ContestGroups](#contestgroups-1)
 * ### [Contestants](#contestants-1)
 * ### [Actions](#actions-1)
-* ### [Stats]()
+* ### [Stats](#stats)
+* ### [setQuestions]()
 
 
 
@@ -288,7 +289,24 @@ DEL api/contest/contestants?id=<contestant_id>
 ``` 
 <hr>
 
-# Actions
+# setQuestions
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/setQuestions/
+```
+
+```JSON
+	{
+	"name":"Autumn2022",
+	"ids":"1,2,3,4,"
+}
+```
+
+* #### ids is the id of question u want the contest u want to connect to and that end ',' is mandatory
+<hr>
+
+# Stats
 * #### permissions : Admin
 * #### Endpoint : 
 ```
@@ -306,10 +324,12 @@ GET api/contest/stats/?contest=<contest_name>
 			"group_count": 4
 		}
 	],
-	"current_group": 33,
-	"challenges_count": 1,
-	"correct_answers": 23,
-	"incorrect_answer": 10
+	"current_contest" : {
+	"Active Contestants":10,
+	"Number of Challenges":1,
+	"Correct Answers":23,
+	"Incorrect Answers":33,
+	}
 }
 ```
 
