@@ -127,6 +127,7 @@ ENV/
 env.bak/
 venv.bak/
 
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -137,6 +138,8 @@ venv.bak/
 # mkdocs documentation
 /site
 
+# databse
+db.sqlite3
 # mypy
 .mypy_cache/
 .dmypy.json

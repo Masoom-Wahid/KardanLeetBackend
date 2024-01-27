@@ -10,7 +10,7 @@
 * ### [Contestants](#contestants-1)
 * ### [Actions](#actions-1)
 * ### [Stats](#stats)
-* ### [setQuestions]()
+* ### [setQuestions](#setquestions-1)
 
 
 
@@ -382,7 +382,7 @@ POST api/contest/actions/
 
 ```JSON
     "name":"Fall 2023",
-    "action":"do_start"
+    "action":"do_star"
 ```
 * ### it stars the contest
 * ### NOTE : You Can Only Have One Starred Contest at a time
@@ -390,7 +390,7 @@ POST api/contest/actions/
 
 ```JSON
     "name":"Fall 2023",
-    "action":"undo_start"
+    "action":"undo_star"
 ```
 * it unstars the contest
 <br>
