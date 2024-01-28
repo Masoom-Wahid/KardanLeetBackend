@@ -5,6 +5,55 @@ import re
 import random, string
 from Questions.models import SampleTestCases
 
+"""
+    LIST OF ERRORS AND STATUSS AVAILABLE FOR COMPILATION
+    'THE ERRORS ARE ALWAYS RETURNED IN 'reason' key value pair'
+
+    IF THE STATUS IS 200 THEN THE USER HAVE SOLVED THE QUESTION
+
+    IF IT IS 406 THEN THE USER HAS NOT SOLVED THE QUESTION AND IS PROBABLY 
+    FACING ONE OF THESE SAID ERRORS
+
+    IF IS IS 423 THEN IT IS PROBABLY THAT THE CONTEST HAS NOT STARTED YET or Has Finished
+    IF IS IS 412 THEN the user has already solved the question
+
+    If It is 404 then the question does not exist or the user does not have a group_instance(Contact Admin)
+    ___________________________________________________________
+
+    "timeout":"it says that the code is taking longer the time_limit vairable",
+
+    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    "InvalidAnswer":"The Output and Expected Output Are Not The Same",
+
+    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+    "Class Issues":"Only For Java And C# , this is when they make 2 classes(FORBIDDEN)",
+
+    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+    "Compilation Error":"Only For Compiled Lanuages such as ["java","c","cpp","typescript","rust","csharp"]
+    This means that there is a syntax error and that particular language could not be compiled into byte code
+    "
+
+    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+
+    "Error":"This Probbably Happens Alot For Interperted Lanuages Since They Are Not Checked at Compile Time
+    but rather at runTime. Any Syntax Error Should Be Reported Here
+    "
+
+    $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+    "Exception":"This is almost always the code or the server error , this should be treated like the status
+    of 500 and is alwyas the problem of the server and not the code
+    "
+
+"""
+
+
 class RunCode:
     def __init__(self,
                 group,

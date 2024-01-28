@@ -107,7 +107,19 @@ class CompetetionViewSet(ModelViewSet):
         code = request.FILES.get("code",None)
         question = get_object_or_404(Contest_Question, pk=request.data.get("id",None))
         group = get_object_or_404(Contest_Groups,user=request.user)
-        contest = get_object_or_404(Contests,starred=True,started=True,finished=False)
+
+        """
+        If The Contest has not started or there is not starred contest or it is finished
+        then the server should response with 423.
+        
+        """
+        try:
+            contest = Contests.objects.get(starred=True,started=True,finished=False)
+        except Contests.DoesNotExist:
+            return Response(
+                status=status.HTTP_423_LOCKED
+                )
+
         """
         Since It Is Annoying to only have one chance when developing this would be off for developing
          and will only work for production
@@ -116,7 +128,7 @@ class CompetetionViewSet(ModelViewSet):
             if Contest_submissiosn.objects.filter(group=group,question=question,solved=True).exists():
                 return Response(
                     {"detail":"You Have Already Solved This Question"},
-                    status=status.HTTP_403_FORBIDDEN
+                    status=status.HTTP_412_PRECONDITION_FAILED
                 )
         if lang and code and typeof:
             if typeof == "run":

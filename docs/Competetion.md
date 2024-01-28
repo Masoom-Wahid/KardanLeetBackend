@@ -67,6 +67,35 @@ GET api/competition/<question_id>?submissions=True&id=<submissions_id>
 ```
 <br>
 
+* ### List of Response and there Meaning
+```JSON
+{
+    "423":"THAT THE CONTEST HAS NOT STARTED YET or Has Finished,",
+    "412":"the user has already solved the question",
+    "404":"the question does not exist or the user does not have a group_instance(Contact Admin)",
+    "406":{
+        "NotAccpetable":"
+            'THE ERRORS ARE ALWAYS RETURNED IN 'reason' key value pair' like this
+            `
+            reason:""
+            `
+            BELOW U CAN FIND THE LIST OF ERRORS
+            WHICH WILL BE RETURNED AS VALUE FOR REASON
+        ",
+        "timeout":"it says that the code is taking longer the time_limit vairable",
+        "InvalidAnswer":"The Output and Expected Output Are Not The Same",
+        "Class Issues":"Only For Java And C# , this is when they make 2 classes(FORBIDDEN)",
+        "Compilation Error":"Only For Compiled Lanuages such as ['java','c','cpp','typescript','rust','csharp']
+        This means that there is a syntax error and that particular language could not be compiled into byte code",
+        "Error":"This Probbably Happens Alot For Interperted Lanuages Since They Are Not Checked at Compile Time
+        but rather at runTime. Any Syntax Error Should Be Reported Here",
+        "Exception":"This is almost always the code or the server error , this should be treated like the status
+        of 500 and is alwyas the problem of the server and not the code"
+    }
+}
+
+```
+
 * ### [RunCode](#runcode-1)
 * ### [SubmitCode](#submitcode-1)
 * ### [ManualRun](#manualrun-1)
