@@ -28,13 +28,13 @@ class SubmitRun(RunCode):
         self.num_of_test_cases=question.num_of_test_cases
         self.manual_testCase = None
 
-    def getsubmitTime(self):
-            return  (timezone.now() - self.group.contest.started_at).total_seconds()
+    """For Getting The Submit Time Of The User"""
+    getsubmitTime = lambda self :   (timezone.now() - self.group.contest.started_at).total_seconds()
 
     def makeId(self):
-        token = secrets.token_urlsafe(16)
+        token = secrets.token_urlsafe(6)
         while Contest_submissiosn.objects.filter(id=token).exists():
-            token = secrets.token_urlsafe(16)
+            token = secrets.token_urlsafe(6)
         return token
 
     def updateLeaderboard(self,instance):

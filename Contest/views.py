@@ -78,7 +78,9 @@ class CompetetionViewSet(ModelViewSet):
                 })
             else:
                 group = get_object_or_404(Contest_Groups,user=request.user)
-                submissions = Contest_submissiosn.objects.filter(group=group,question=question)
+                submissions = Contest_submissiosn.objects.filter(
+                    group=group,
+                    question=question).order_by("-solved","-submit_time")
                 serializer = ContestSubmissionSerializer(submissions,many=True,context={
                     "showCode":False
                 })
