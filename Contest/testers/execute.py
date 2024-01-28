@@ -113,7 +113,7 @@ class RunCode:
     
     def getLanguageCommands(self,lang,filename,file,path):
         language_commands = {
-            "python": ["python3", file],
+            "python": [settings.PYTHON_VARIABLE_NAME, file],
             "java": ["java", filename],
             "php": ["php", file],
             "c": ["./" + filename],
@@ -151,8 +151,12 @@ class RunCode:
                 print(f"expected_output was : \n{str(expectedOutputData).strip()}")
                 print(f"your output was:  \n{str(output.decode()).strip()}")
 
-            
-            if output.decode().strip() == str(expectedOutputData).strip():
+            """
+            Sometimes The Output From The user may contain \r\n instead of the usual
+            \n which would let the incorrect answer even though they solved the question
+            """
+            FINALED_OUTPUT=output.decode().replace('\r\n', '\n')
+            if FINALED_OUTPUT.strip() == str(expectedOutputData).strip():
                 return True, {}
             else:
                 return False, {

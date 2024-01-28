@@ -13,6 +13,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True if os.getenv("DEBUG") == "TRUE" else False
 
+PYTHON_VARIABLE_NAME = os.getenv("PYTHON_VARIABLE")
+
 ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS = True
