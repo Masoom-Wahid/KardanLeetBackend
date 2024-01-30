@@ -9,7 +9,9 @@ from .serializers import (ContestantsSerializer,
                           RetreiveQuestionSerializer)
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework import status
-from Questions.serializers import SampleTestCasesExampleSerializer,ConstraintsSerializer
+from Questions.serializers import (SampleTestCasesExampleSerializer
+                                ,ConstraintsSerializer
+                                ,ShowSampleTestCasesExampleSerializer)
 from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import (create_folder_for_contest
@@ -97,7 +99,7 @@ class CompetetionViewSet(ModelViewSet):
             })
             sample_test_cases = question.sampletestcasesexample_set.all()
             consts = question.constraints
-            sample_serilizer = SampleTestCasesExampleSerializer(sample_test_cases,many=True)
+            sample_serilizer = ShowSampleTestCasesExampleSerializer(sample_test_cases,many=True)
             constraints_serializer = ConstraintsSerializer(consts,many=False)
             return Response(
                 {

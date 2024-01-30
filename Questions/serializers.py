@@ -19,6 +19,11 @@ class SampleTestCaseSerializer(serializers.ModelSerializer):
 
 
 class SampleTestCasesExampleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SampleTestCasesExample
+        fields = '__all__'
+
+class ShowSampleTestCasesExampleSerializer(serializers.ModelSerializer):
     sample = serializers.SerializerMethodField()
     answer = serializers.SerializerMethodField()
     explanation = serializers.SerializerMethodField()
