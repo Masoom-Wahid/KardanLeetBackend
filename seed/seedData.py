@@ -48,27 +48,27 @@ SEED_DATA = {
                 "consts":"n<=10\nk<10"
             }
         },
-        "NthFibonacciOfANumber":{
+        "TwoSum":{
         "data" :{
         "num_of_test_cases":"5",
             "lvl":"HARD",
             "point":"30",
-            "time_limit":"10",
-            "description":"""Given int 'n' for testcases and str 'k' for num , find whether the given nth fibonacci sequence\n 
-            The Fibonacci sequence is a series of numbers in which each number is the sum of the two preceding ones, usually starting with 0 and 1. The sequence goes: 0, 1, 1, 2, 3, 5, 8, and so forth.
-            each nth is the sum of the n-1 and n-2""",
+            "time_limit":"5",
+            "description":"""Given an array of integers 'nums' and an integer 'target', return indices of the
+            two numbers such that they add up to 'target'.
+            """,
         },
             "testcases":{
-                "input":"4\n4\n5\n6\n7\n",
-                "output":"3\n5\n8\n13"
+                "input":"2\n9\n2 7 11 15\n3\n1 7 2 1",
+                "output":"0 1\n0 2"
             },
             "samples":{
-                "sample":"4",
-                "answer":"2",
-                "explanation":"Because 1+1 is 2",
+                "sample":"1\n9\n2 7 11 15",
+                "answer":"0 1",
+                "explanation":"Because nums[0] + nums[1] is 9",
             },
             "consts":{
-                "consts":"n<=10\nk<10"
+                "consts":"nums.length<=10\ntarget<=100"
             }
         }
         }

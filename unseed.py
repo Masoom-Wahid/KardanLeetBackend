@@ -19,7 +19,7 @@ from Contest.models import Contests,Contest_Groups,Contest_Question
 
 CONTEST_NAME = "Winter2023"
 
-QUESTIONS = ["FactorialOfANumber","FindThePalindrome","NthFibonacciOfANumber"]
+QUESTIONS = ["FactorialOfANumber","FindThePalindrome","TwoSum"]
 
 print("Deleting the data created by seed.py")
 
