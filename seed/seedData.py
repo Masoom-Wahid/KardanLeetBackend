@@ -11,15 +11,15 @@ SEED_DATA = {
             "lvl":"MEDUIM",
             "point":"20",
             "time_limit":"10",
-            "description":"Given int 'n' for testcases and int 'k' for numbers , find the factorial of 'n' and print the output",
+            "description":"Given int 'n' for testcases and int 'k' for numbers , find the factorial of 'k' and print the output",
             },
             "testcases":{
                 "input":"4\n3\n3\n4\n5\n",
                 "output":"6\n6\n24\n120"
             },
             "samples":{
-                "sample":"5",
-                "answer":"120",
+                "sample":"2\n3\n5",
+                "answer":"6\n120",
                 "explanation":"Because Factorial Of 5 is 120",
             },
             "consts":{
@@ -36,12 +36,12 @@ SEED_DATA = {
             "description":"Given int 'n' for testcases and str 'k' for word , find whether the given word is palindrome or not",
             },
             "testcases":{
-                "input":"3\nwow\nbob\nnot\n",
+                "input":"3\nwow\nbob\nnot",
                 "output":"True\nTrue\nFalse"
             },
             "samples":{
-                "sample":"wow",
-                "answer":"True",
+                "sample":"2\nwow\nnot",
+                "answer":"True\nFalse",
                 "explanation":"Because 'wow' reversed is 'wow' and it is a palindrome",
             },
             "consts":{
