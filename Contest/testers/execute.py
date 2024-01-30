@@ -139,7 +139,7 @@ class RunCode:
         except Exception as e:
             return False,{
                 "reason":"Class Issues",
-                "detail":"make sure you only have one valid class"
+                "error":"make sure you only have one valid class"
             }
 
 
@@ -187,7 +187,8 @@ class RunCode:
             except subprocess.TimeoutExpired:
                 process.kill()
                 return False,{
-                    "reason":"timeout"
+                    "reason":"timeout",
+                    "error":"Infinite Loop Or The Question Took Longer Then Time Limit"
                 }
             if error:
                 return False,{

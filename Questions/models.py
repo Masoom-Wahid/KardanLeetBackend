@@ -4,9 +4,9 @@ from Contest.models import Contest_Question
     
 class SampleTestCasesExample(models.Model):
     question = models.ForeignKey(Contest_Question,on_delete=models.CASCADE)
-    sample = models.CharField(max_length=70)
-    answer = models.CharField(max_length=70)
-    explanation  = models.CharField(max_length=70)
+    sample = models.TextField()
+    answer = models.TextField()
+    explanation  = models.TextField()
     def __str__(self):
         return str(self.question.title)
 

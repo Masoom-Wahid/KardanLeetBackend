@@ -4,10 +4,12 @@ from .serializers import (ContestantsSerializer,
                           ContestSerializer,
                           ContestGroupSerializer,
                           ContestQuestionSerializer,
-                          ContestSubmissionSerializer)
+                          ContestSubmissionSerializer,
+                          CompetitionQuestionSerializer,
+                          RetreiveQuestionSerializer)
 from rest_framework.permissions import  IsAuthenticated
 from rest_framework import status
-from Questions.serializers import SampleTestCasesExampleSerializer
+from Questions.serializers import SampleTestCasesExampleSerializer,ConstraintsSerializer
 from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import (create_folder_for_contest
@@ -40,10 +42,11 @@ class CompetetionViewSet(ModelViewSet):
 
 
     def list(self,request):
-        #TODO : Make this with caching
         instance = get_object_or_404(Contests,starred=True)
         questions = Contest_Question.objects.filter(contest=instance).order_by("point")
-        serializer = ContestQuestionSerializer(questions,many=True)
+        serializer = CompetitionQuestionSerializer(questions,many=True,context={
+            "user":request.user
+            })
         return Response(
             {
             "name":instance.name,
@@ -89,13 +92,18 @@ class CompetetionViewSet(ModelViewSet):
                 status=status.HTTP_200_OK
             )
         else:
-            serializer = ContestQuestionSerializer(question,many=False)
+            serializer = RetreiveQuestionSerializer(question,many=False,context={
+            "user":request.user
+            })
             sample_test_cases = question.sampletestcasesexample_set.all()
+            consts = question.constraints
             sample_serilizer = SampleTestCasesExampleSerializer(sample_test_cases,many=True)
+            constraints_serializer = ConstraintsSerializer(consts,many=False)
             return Response(
                 {
                     "question":serializer.data,
-                    "test_cases":sample_serilizer.data
+                    "test_cases":sample_serilizer.data,
+                    "consts":constraints_serializer.data
                 },
                 status=status.HTTP_200_OK
             )
