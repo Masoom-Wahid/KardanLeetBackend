@@ -29,7 +29,8 @@ class QuestionViewSet(ModelViewSet):
     def retrieve(self,request,pk=None):
         question_instance = get_object_or_404(Contest_Question,id=pk)
         #TODO : make this in one query
-        avaialabe_test_cases = SampleTestCasesExample.objects.filter(question_instance).count() // 2
+        avaialabe_test_cases = SampleTestCases.objects.filter(question=question_instance).count() // 2
+        
         files_required = avaialabe_test_cases < question_instance.num_of_test_cases
         samples = SampleTestCasesExample.objects.filter(question=question_instance)
         constraints = Constraints.objects.filter(question=question_instance)
@@ -63,8 +64,13 @@ class QuestionViewSet(ModelViewSet):
         else:
             instance = Contest_Question.objects.all()
 
-        
         questions_count = instance.count()
+
+        if questions_count == 0:
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+                )
+
         pages_count = ceil(questions_count/MAXIMUM_PER_PAGE_ALLOWED)
         if pages_count < page:
             return Response(
@@ -115,6 +121,26 @@ class QuestionViewSet(ModelViewSet):
             status=status.HTTP_204_NO_CONTENT
         )
 
+
+
+    @action(detail=False,methods=["GET"])
+    def search(self,request):
+        name = request.GET.get("name",None)
+        if not name:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        title = request.GET.get("title")
+        contest_instance = get_object_or_404(Contests,name=name)
+
+        instance = Contest_Question.objects.exclude(contest__id=contest_instance.id).filter(title__icontains=title)
+        serialiazer = ContestQuestionsSerializer(instance,many=True)
+        return Response(
+            serialiazer.data,
+            status=status.HTTP_200_OK
+            )
+
+
     @action(detail=False,methods=["GET","POST","PUT"])
     def testcases(self,request):
         method = request.method
@@ -123,7 +149,7 @@ class QuestionViewSet(ModelViewSet):
             output = request.data.get("output",None)
             input = request.data.get("input",None)
 
-            if not input and output:
+            if not input and  not output:
                 return Response(
                     {"detail":"input and output required"},
                     status=status.HTTP_400_BAD_REQUEST
@@ -177,11 +203,11 @@ class QuestionViewSet(ModelViewSet):
         
         elif method == "GET":
             question_id = request.GET.get("question",None)
-            id = request.GET.get("id",None)
+            sample_id = request.GET.get("id",None)
             if question_id:
                 question_instance = get_object_or_404(Contest_Question,pk=question_id)
                 files_required = SampleTestCases.objects.filter(question=question_instance).count() < question_instance.num_of_test_cases
-                if not id:
+                if not sample_id:
                     return Response(
                         {"testCases":question_instance.num_of_test_cases,
                         "files_required":files_required
@@ -190,7 +216,7 @@ class QuestionViewSet(ModelViewSet):
                     )
                 else:
                     test_case = SampleTestCases.objects.filter(
-                            Q(question__pk=question_id) & (Q(name=f"input{id}") | Q(name=f"output{id}"))
+                            Q(question__pk=question_id) & (Q(name=f"input{sample_id}") | Q(name=f"output{sample_id}"))
                     )
                     if not test_case:
                         return Response(

@@ -111,6 +111,21 @@ class CompetetionViewSet(ModelViewSet):
             )
 
     
+    @action(detail=False,methods=["GET"])
+    def submissions(self,request):
+        sub_id = request.GET.get("id",None)
+        instance = get_object_or_404(Contest_submissiosn,id=sub_id)
+        if instance.group.user != request.user and  not request.user.is_superuser:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
+                )
+        serializer = ContestSubmissionSerializer(instance,many=False,context={
+            "showCode":True
+        })
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
     def create(self,request):
         lang = request.data.get("lang",None)
         typeof = request.data.get("type",None)
@@ -201,11 +216,7 @@ class ContestViewSet(ModelViewSet):
 
     def update(self,request,pk=None):
         instance = get_object_or_404(Contests,pk=pk)
-        if change_contest_name(instance.name,request.data.get("name")) == None:
-            return Response(
-                {"detail":"Could Not Change the contest name"},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        #TODO: Update The credentials.txt file here 
         serializer = ContestSerializer(instance=instance,data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -215,8 +226,10 @@ class ContestViewSet(ModelViewSet):
         )
     
     def retrieve(self, request,pk=None):
-        instance = get_object_or_404(Contests,pk=pk)
-        show_results = request.GET.get("results",None)
+        instance = get_object_or_404(Contests,id=pk)
+        show_results = request.GET.get("results",False)
+        show_groups = request.GET.get("groups",False)
+
         if show_results:
             data = getLeaderBoardData(instance)
             sorted_data = sortLeaderBoarddata(data)
@@ -224,13 +237,19 @@ class ContestViewSet(ModelViewSet):
                 sorted_data,
                 status=status.HTTP_200_OK
             )
-        else:
+        elif show_groups:
             groups = instance.contest_groups_set.all()
             serializer = ContestGroupSerializer(groups,many=True)
             return Response(
                 serializer.data,
                 status=status.HTTP_200_OK
             )
+        else:
+            serializer = ContestSerializer(instance,many=False)
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+                )
 
     def create(self,request,*args,**kwargs):
         serializer = ContestSerializer(data=request.data)
@@ -264,7 +283,8 @@ class ContestViewSet(ModelViewSet):
         questions_ids = request.data.get("ids",None)
         if questions_ids:
             conetst_instance = get_object_or_404(Contests,name=contest_name)
-            ids = questions_ids.split(",")[:-1]
+            print(f"questions ids are {questions_ids}")
+            ids = questions_ids.split(",")
             print(ids)
             questions = Contest_Question.objects.filter(id__in=ids)
             if any(question is None for question in questions):
@@ -277,6 +297,10 @@ class ContestViewSet(ModelViewSet):
                 conetst_instance.save()
                 return Response(
                     status=status.HTTP_204_NO_CONTENT
+                )
+        else:
+            return Response(
+                status=status.HTTP_400_BAD_REQUEST
                 )
 
     @action(detail=False,methods=["POST"])
@@ -391,67 +415,67 @@ class ContestViewSet(ModelViewSet):
         MAXIMUM_PER_PAGE_ALLOWED = 6
         page = int(request.GET.get("page",1))
         group_id = request.GET.get("id",None)
-        if group_id:
+        submission_id = request.GET.get("submission_id",None)
+        if submission_id:
             """
             if "id" is given , that means the user wants to see the submissions of a group,
             now if "submission_id" is not given we render all submissions else we render that
             particular submission
             """
-            submission_id = request.GET.get("submission_id",None)
-            if submission_id:
-                instance = get_object_or_404(Contest_submissiosn,id=submission_id)
-                serializer = ContestSubmissionSerializer(instance,many=False,context={
-                    "showCode":True
-                })
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_200_OK
-                )
-            else:
+
+            instance = get_object_or_404(Contest_submissiosn,id=submission_id)
+            serializer = ContestSubmissionSerializer(instance,many=False,context={
+                "showCode":True
+            })
+            return Response(
+                serializer.data,
+                status=status.HTTP_200_OK
+            )
+        elif group_id:
                 # Filters
-                solved = request.GET.get("solved","")
-                time = request.GET.get("time","")
-                lang = request.GET.get("lang","")
+            solved = request.GET.get("solved","")
+            time = request.GET.get("time","")
+            lang = request.GET.get("lang","")
 
-                group_instance = get_object_or_404(Contest_Groups,id=group_id)
+            group_instance = get_object_or_404(Contest_Groups,id=group_id)
 
-                filter_conditions = Q(group=group_instance)
-                if lang:
-                    filter_conditions &= Q(lang=lang)
-                elif solved:
-                    filter_conditions &= Q(solved=solved)
+            filter_conditions = Q(group=group_instance)
+            if lang:
+                filter_conditions &= Q(lang=lang)
+            elif solved:
+                filter_conditions &= Q(solved=solved)
 
 
-                if time == "earliest":
-                    instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("-submit_time")
-                else:
-                    instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("submit_time")
+            if time == "earliest":
+                instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("-submit_time")
+            else:
+                instance = Contest_submissiosn.objects.filter(filter_conditions).order_by("submit_time")
 
-                submissions_count = instance.count()
-                pages_count = ceil(submissions_count/MAXIMUM_PER_PAGE_ALLOWED)
-                if pages_count < page:
-                    return Response(
-                    {"detail":"Invalid Page Number"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-                
-                index = (page  - 1 )* MAXIMUM_PER_PAGE_ALLOWED
-                if index + MAXIMUM_PER_PAGE_ALLOWED > submissions_count:
-                    last_index = submissions_count
-                else:
-                    last_index = index + MAXIMUM_PER_PAGE_ALLOWED
-
-                data = instance[index:last_index]
-                serializer = ContestSubmissionSerializer(data,many=True)
-
+            submissions_count = instance.count()
+            pages_count = ceil(submissions_count/MAXIMUM_PER_PAGE_ALLOWED)
+            if pages_count < page:
                 return Response(
-                    {
-                        "avaialabe_pages":pages_count,
-                        "submissions_count":submissions_count,
-                        "data":serializer.data
-                    },
-                    status=status.HTTP_200_OK
+                {"detail":"Invalid Page Number"},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            index = (page  - 1 )* MAXIMUM_PER_PAGE_ALLOWED
+            if index + MAXIMUM_PER_PAGE_ALLOWED > submissions_count:
+                last_index = submissions_count
+            else:
+                last_index = index + MAXIMUM_PER_PAGE_ALLOWED
+
+            data = instance[index:last_index]
+            serializer = ContestSubmissionSerializer(data,many=True)
+
+            return Response(
+                {
+                    "avaialabe_pages":pages_count,
+                    "submissions_count":submissions_count,
+                    "data":serializer.data
+                },
+                status=status.HTTP_200_OK
+            )
         else:
             """
             else the user wants to see all groups

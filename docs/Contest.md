@@ -24,18 +24,29 @@ GET api/contest/
 <hr>
 
 # RetreiveContest
+* #### [listgroups](#detail-1)
 * #### [listgroups](#listgroups-1)
 * #### [listresults](#listresults-1)
 <br>
 
-* ### listgroups
+* ### Detail
 * #### permissions : Admin
 * #### Endpoint : 
 ```
 GET api/contest/<id>
 ```
-* #### Returns the groups in that contest
+* #### Returns the detail of that contest
 <br>
+* ### Groups
+* #### permissions : Admin
+* #### Endpoint : 
+
+```
+GET api/contest/<id>?groups=True<id>
+```
+* #### Returns the Groups of that contest
+<br>
+
 
 * ### listresults
 * #### permissions : Admin
@@ -235,7 +246,7 @@ GET api/contest/groups/?id=89&solved=True&lang=python&page=2&time=earliest
 
 ## SUBMISSION DETAIL
 ```
-GET api/contest/groups/?id=89&submission_id=tKIjSuOXwiYRLGDDy3lZGg
+GET api/contest/groups/?submission_id=tKIjSuOXwiYRLGDDy3lZGg
 ```
 ### It returns the detail of that submission
 ### The Response should look smth like this

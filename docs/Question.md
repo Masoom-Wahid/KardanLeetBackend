@@ -9,6 +9,7 @@
 * ### [SampleTestCases](#sampletestcases-1)
 * ### [Constraints](#constraints-1)
 * ### [question_files](#questionsfiles)
+* ### [search](#search-questions-1)
 
 <div class="break"></div>
 
@@ -68,6 +69,15 @@ POST api/questions/<id>
 	"description":"jama ko",
 	"num_of_test_cases":"3"
 ```
+<div class="break"></div>
+
+# <span class="text">Search Questions<span>
+### Permissions : Admin
+### Endpoint:
+```
+GET api/questions/search/?title=<title>
+```
+#### filter the question based on the given title
 <div class="break"></div>
 
 # <span class="text">SampleTestCases<span>

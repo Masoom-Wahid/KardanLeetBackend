@@ -16,7 +16,7 @@ os.environ["DJANGO_SETTINGS_MODULE"]="KardanLeet.settings"
 django.setup()
 
 from Contest.models import Contests,Contest_Groups,Contest_Question
-from Conte.tasks import scheduler
+from Contest.tasks import scheduler
 
 CONTEST_NAME = "Winter2023"
 QUESTIONS = ["FactorialOfANumber","FindThePalindrome","TwoSum"]
@@ -33,10 +33,11 @@ except Contests.DoesNotExist as e:
 
 try:
     scheduler.remove_job("Contest_Listener")
-except:
-    print("Listener Already Removed")
+except Exception as e:
+	print(e)
+	print("Listener Already Removed")
 
-contest_instance.delete()
+
 
 for group in Contest_Groups.objects.filter(contest=contest_instance):
 	group.user.delete()
@@ -45,5 +46,7 @@ for group in Contest_Groups.objects.filter(contest=contest_instance):
 for question in QUESTIONS:
 	question_instance = Contest_Question.objects.get(title=question)
 	question_instance.delete()
+
+contest_instance.delete()
 
 print("Deleting Completed")

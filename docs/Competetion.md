@@ -5,6 +5,7 @@
 * ### [Submissions](#submissions-1)
 * ### [TestCode](#testcode-1)
 * ### [Leaderboard](#leaderboard-1)
+* ### [GetSubmissionDetail][#get-submissions-1]
 
 # GetQuestions
 * ### [AllQuestions](#allquestions-1)
@@ -25,6 +26,16 @@ GET api/competition/
 GET api/competition/<question_id>
 ```
 * ### returns all of the questions details , eg: testcases , constraints
+<hr>
+
+* ## GetSubmissions
+* ### permissions : Authenticated Users
+* ### Endpoint :
+```
+GET api/competition/submissions/?id=<sub_id>
+```
+* ### returns the detail of that submission
+
 
 <hr>
 

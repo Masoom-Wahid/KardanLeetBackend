@@ -168,7 +168,7 @@ class RunCode:
             "c": ["./" + filename],
             "cpp": ["./" + filename],
             "rust": ["./" + filename],
-            "csharp": ["./" + filename + ".exe"],
+            "csharp": ["mono" ,"./"+ filename + ".exe"],
             "javascript": ["node", path],
             "typescript": ["node", path],
         }

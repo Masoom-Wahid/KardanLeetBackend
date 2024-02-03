@@ -7,7 +7,8 @@ class ContestQuestionsSerializer(serializers.ModelSerializer):
     contest = serializers.SerializerMethodField()
     class Meta:
         model = Contest_Question
-        fields = '__all__'
+        exclude= ["created_at",]
+        
     def get_contest(self,obj):
         return obj.contest.name
     
