@@ -15,7 +15,7 @@ def _(environment, **kw):
 class RegisteredUser(SequentialTaskSet):
     @task
     def testSubmission(self):
-        lang = "java"
+        lang = "python"
 
         question_id = "1"
         with open("access.txt","r") as file:
