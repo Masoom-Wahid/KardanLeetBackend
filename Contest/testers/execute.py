@@ -4,6 +4,7 @@ from django.conf import settings
 import re
 import random, string
 from Questions.models import SampleTestCases
+from django.core.cache import cache
 
 """
     LIST OF ERRORS AND STATUSS AVAILABLE FOR COMPILATION
@@ -272,10 +273,18 @@ class RunCode:
             return False,compileDetail
         file = compileDetail["file"]
         filename = compileDetail["filename"]
-        testCasesData = {}
-        testCases = SampleTestCases.objects.filter(question=self.question)
-        for testcase in testCases:
-            testCasesData[testcase.name] = testcase.testCase.replace('\r\n', '\n')
+
+        # check if the testcases has already beeen asked for
+        cacheExists = cache.get(self.question_name)
+        if cacheExists:
+            testCasesData = cacheExists
+        else:
+            testCasesData = {}
+            testCases = SampleTestCases.objects.filter(question=self.question)
+            for testcase in testCases:
+                testCasesData[testcase.name] = testcase.testCase.replace('\r\n', '\n')
+
+        
         # we loop on the number of testcases
         for i in range(1,self.num_of_test_cases+1):
             result ,detail = self.runCode(

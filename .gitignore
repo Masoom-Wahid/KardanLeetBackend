@@ -52,6 +52,9 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# for access.txt created from Load Testing In Benchmark
+Benchmark/access.txt
+
 # Translations
 *.mo
 *.pot

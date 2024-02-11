@@ -3,6 +3,7 @@ FROM python:3 AS Base
 # Install system dependencies
 RUN pip install --upgrade pip
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    gunicorn \
     php \
     nodejs \
     npm \
@@ -27,4 +28,4 @@ RUN pip install -r requirments.txt
 COPY . .
 
 # Set the command to start the server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "13", "KardanLeet.wsgi:application"]

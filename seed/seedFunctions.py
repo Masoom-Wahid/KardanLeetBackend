@@ -180,7 +180,6 @@ def createQuestions(ACCESS_TOKEN) -> [bool,str]:
 
 def assignQuestions(ACCESS_TOKEN) -> bool:  
     ids = ",".join([str(value) for key,value in QUESTION_IDS.items()])
-    ids += ","
     data = {
         "name":CONTEST_NAME,
         "ids":ids

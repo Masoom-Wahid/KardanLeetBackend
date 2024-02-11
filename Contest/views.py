@@ -25,6 +25,7 @@ from rest_framework.parsers import MultiPartParser, FormParser,JSONParser
 from .testers.Run import Run
 from .testers.ManualRun import ManualRun
 from .testers.SubmitRun import SubmitRun
+from .testers.__Del__ import deleteFiles
 from rest_framework.permissions import IsAuthenticated
 from Auth.permissions import IsSuperUserOrIsStaffUser
 from django.shortcuts import get_object_or_404
@@ -135,7 +136,7 @@ class CompetetionViewSet(ModelViewSet):
 
         """
         If The Contest has not started or there is not starred contest or it is finished
-        then the server should response with 423.
+        then the API should response with 423.
         
         """
         try:
@@ -271,9 +272,11 @@ class ContestViewSet(ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
-    def FinishContest(self):
+    def finishContest(self):
         starred_contest = Contests.objects.get(starred=True,started=True)
         starred_contest.finished = True
+        starred_contest.starred=False
+        deleteFiles()
         starred_contest.save()
 
 
@@ -283,9 +286,7 @@ class ContestViewSet(ModelViewSet):
         questions_ids = request.data.get("ids",None)
         if questions_ids:
             conetst_instance = get_object_or_404(Contests,name=contest_name)
-            print(f"questions ids are {questions_ids}")
             ids = questions_ids.split(",")
-            print(ids)
             questions = Contest_Question.objects.filter(id__in=ids)
             if any(question is None for question in questions):
                 return Response(
@@ -321,8 +322,9 @@ class ContestViewSet(ModelViewSet):
                             )
                         contest_instance.started = True
                         contest_instance.started_at = timezone.now()
+                        deleteFiles()
                         run_at = timezone.now() + contest_instance.duration
-                        scheduler.add_job(self.FinishContest, 'date', run_date=run_at,id="Contest_Listener")
+                        scheduler.add_job(self.finishContest, 'date', run_date=run_at,id="Contest_Listener")
                     else:
                         return Response(
                             {"detail":"The Contest Has Already Started or You Need To Star The Contest"},
@@ -349,8 +351,13 @@ class ContestViewSet(ModelViewSet):
                 else:
                     contest_instance.starred = False
             elif typeof == "finish":
-                contest_instance.finished = True if action == "do" else False
-            
+                if action == "do":
+                    contest_instance.finished = True 
+                    contest_instance.starred = False
+                    deleteFiles()
+                else:
+                    contest_instance.finished = False
+
             contest_instance.save()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:

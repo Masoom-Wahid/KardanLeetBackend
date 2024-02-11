@@ -13,11 +13,13 @@ from .serializers import (ContestQuestionsCreatorSerializer
                           ,ConstraintsSerializer
                           ,SampleTestCaseSerializer
                           )
+from .utils import deleteCachedQuestions
 from Auth.permissions import IsSuperUserOrIsStaffUser
 from django.db.models import Q
 from rest_framework.status import *
 from django.shortcuts import get_object_or_404
 from math import ceil
+
 
 class QuestionViewSet(ModelViewSet):
     queryset = Contest_Question.objects.all()
@@ -108,6 +110,9 @@ class QuestionViewSet(ModelViewSet):
         question = get_object_or_404(Contest_Question,id=pk)
         serializer = ContestQuestionsSerializer(instance=question,data=request.data)
         serializer.is_valid(raise_exception=True)
+        # Just To Make Sure That Everything is Updated and cache still not holding the previous data
+        deleteCachedQuestions(question.title)
+
         serializer.save()
         return Response(
             serializer.data,
@@ -174,6 +179,7 @@ class QuestionViewSet(ModelViewSet):
                     testCase=testCaseNames[testCase]
                 )
                 instance.save()
+            deleteCachedQuestions(question_instance.title)
             return Response(
                 status=status.HTTP_204_NO_CONTENT
             )
@@ -182,6 +188,7 @@ class QuestionViewSet(ModelViewSet):
             id = request.data.get("id",None)
             input = request.data.get("input",None)
             output = request.data.get("output",None)
+            instance = get_object_or_404(Contest_Question,id=id)
             if question_id and input and output:
                 test_case = SampleTestCases.objects.filter(
                         Q(question__pk=question_id) & (Q(name=f"input{id}") | Q(name=f"output{id}"))
@@ -192,6 +199,7 @@ class QuestionViewSet(ModelViewSet):
                     else:
                         test.testCase = output
                     test.save()
+                deleteCachedQuestions(instance.title)
                 return Response(
                     status=status.HTTP_204_NO_CONTENT
                 )

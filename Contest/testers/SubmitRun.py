@@ -4,8 +4,8 @@ from Contest.models import Contest_submissiosn
 from django.utils import timezone
 from datetime import timedelta
 from django.core.cache import cache
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
+# from channels.layers import get_channel_layer
+# from asgiref.sync import async_to_sync
 from Contest.tasks import scheduler
 from ..utils import getLeaderBoardData,sortLeaderBoarddata
 
@@ -50,8 +50,8 @@ class SubmitRun(RunCode):
         else:
             leaderboard_obj = getLeaderBoardData(self.group.contest)
             cache.set("leaderboard",leaderboard_obj,14400)
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
+        # channel_layer = get_channel_layer()
+        # async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
 
     def writeCode(self,file):
         self.obj.code = file
@@ -61,7 +61,7 @@ class SubmitRun(RunCode):
         if status == "Solved":
             self.obj.solved = True
         self.obj.status=status
-        scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=self.obj.id)
+        # scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=self.obj.id)
         self.obj.save()
 
 

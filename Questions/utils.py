@@ -1,6 +1,7 @@
 import os
 from django.conf import settings
 import shutil
+from django.core.cache import cache
 
 
 def change_question_name(contest_name,previous_question_name,new_question_name):
@@ -22,6 +23,9 @@ def change_question_name(contest_name,previous_question_name,new_question_name):
     except OSError as e:
         print("Error Updating the folder name",e)
         return None
+    
+
+deleteCachedQuestions = lambda question : cache.delete(question) if cache.has_key(question) else None
 
 def create_folder_for_questions(questions_name):
     path = os.path.join(settings.MEDIA_ROOT, f"Questions/{questions_name}")

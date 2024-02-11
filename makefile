@@ -26,6 +26,10 @@ docker-remove:
 
 change:
 	docker build --tag contest .
+
+run-gunicorn:
+	gunicorn --workers=7 KardanLeet.wsgi:application
+	
 #default: install-requirements makemigrations migrate su runserver
 check-compilers:
 	@command -v python3 >/dev/null 2>&1 && { echo -e "\033[32mPython found\033[0m"; } || { echo -e "\033[31mPython not found\033[0m"; exit 1; }
