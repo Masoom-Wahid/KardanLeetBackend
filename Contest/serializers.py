@@ -14,7 +14,6 @@ class CompetitionQuestionSerializer(serializers.ModelSerializer):
         user = self.context["user"]
         group = user.contest_groups_set.all()[0]
         return Contest_submissiosn.objects.filter(group=group,solved=True,question=obj).exists()
-        return result
 
 
 class RetreiveQuestionSerializer(serializers.ModelSerializer):
@@ -42,7 +41,7 @@ class ContestGroupSerializer(serializers.ModelSerializer):
 class ContestSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contests
-        fields = ["id","name","duration","starred"]
+        fields = ["id","name","duration","starred","started","finished"]
 
 
 
