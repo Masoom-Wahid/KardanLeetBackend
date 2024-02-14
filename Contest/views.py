@@ -45,7 +45,12 @@ class CompetetionViewSet(ModelViewSet):
 
 
     def list(self,request):
-        instance = get_object_or_404(Contests,starred=True)
+        try:
+            instance = Contests.objects.get(started=True,finished=False)
+        except :
+            return Response(
+                status=status.HTTP_423_LOCKED
+            )
         questions = Contest_Question.objects.filter(contest=instance).order_by("point")
         serializer = CompetitionQuestionSerializer(questions,many=True,context={
             "user":request.user

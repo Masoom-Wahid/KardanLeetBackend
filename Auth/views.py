@@ -84,7 +84,7 @@ class UserViewSet(ModelViewSet):
         requires contest and page
         returns the username and password from the credentials.txt file
         """
-        MAXIMUM_PER_PAGE_ALLOWED = 20
+        MAXIMUM_PER_PAGE_ALLOWED = 5
         contest_name = request.GET.get("contest",None)
         page = int(request.GET.get("page",1))
         if contest_name and page:
