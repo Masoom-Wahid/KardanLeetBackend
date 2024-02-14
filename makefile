@@ -1,8 +1,8 @@
 .PHONY: default create-venv activate-venv install-requirements makemigrations migrate su runserver check-compilers
 
-PYTHON := python3
+PYTHON := python
 VENV := venv
-REQUIREMENTS := requirments.txt
+REQUIREMENTS := requirments_local.txt
 OS := $(shell uname -s)
 
 

@@ -8,9 +8,10 @@ Contest
 
 
 import os
+from django.conf import settings
 
 
-def deleteFiles(path=os.getcwd()
+def deleteFiles(path=os.path.join(settings.BASE_DIR,"Contest","testers")
                 ,exception=["__Del__.py",
                             "__init__.py",
                              "__pycache__",
