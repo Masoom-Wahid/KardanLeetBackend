@@ -99,14 +99,17 @@ class CompetetionViewSet(ModelViewSet):
             "user":request.user
             })
             sample_test_cases = question.sampletestcasesexample_set.all()
-            consts = question.constraints
+
+            try: consts = question.constraints 
+            except : consts = None
+
             sample_serilizer = ShowSampleTestCasesExampleSerializer(sample_test_cases,many=True)
-            constraints_serializer = ConstraintsSerializer(consts,many=False)
+            if consts : constraints_serializer = ConstraintsSerializer(consts,many=False)
             return Response(
                 {
                     "question":serializer.data,
                     "test_cases":sample_serilizer.data,
-                    "consts":constraints_serializer.data
+                    "consts":constraints_serializer.data if consts else {"consts":""}
                 },
                 status=status.HTTP_200_OK
             )
