@@ -525,6 +525,7 @@ class ContestViewSet(ModelViewSet):
 
             return Response(
                 {
+                    "team_name":group_instance.group_name,
                     "avaialabe_pages":pages_count,
                     "submissions_count":submissions_count,
                     "data":serializer.data
