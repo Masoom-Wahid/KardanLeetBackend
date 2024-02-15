@@ -55,6 +55,10 @@ cover/
 # for access.txt created from Load Testing In Benchmark
 Benchmark/access.txt
 
+# For SSL Certifactes created by OPENSSL
+private_key.pem
+certificate.pem
+
 # Translations
 *.mo
 *.pot
