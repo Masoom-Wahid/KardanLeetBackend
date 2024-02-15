@@ -137,6 +137,15 @@ class CompetetionViewSet(ModelViewSet):
             serializer.data,
             status=status.HTTP_200_OK
         )
+    
+    @action(detail=False,methods=["POST"],parser_classes=[JSONParser])
+    def setTabSwitch(self,request):
+        group_instance = get_object_or_404(Contest_Groups,user__id=request.data.get("id",None))
+        group_instance.tabswitch = request.data.get("tabswitch",1) ; group_instance.save()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
+    
     def create(self,request):
         lang = request.data.get("lang",None)
         typeof = request.data.get("type",None)

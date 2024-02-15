@@ -284,6 +284,8 @@ class RunCode:
             for testcase in testCases:
                 testCasesData[testcase.name] = testcase.testCase.replace('\r\n', '\n')
 
+            cache.set(self.question_name,testCasesData,14400)
+
         
         # we loop on the number of testcases
         for i in range(1,self.num_of_test_cases+1):
