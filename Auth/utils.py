@@ -99,7 +99,7 @@ def generate_user_for_contest(amount,startFrom,contest_name,contest):
         instance.save()
         Contest_Groups.objects.create(
             user = instance,
-            group_name = f"contestant__{i+startFrom}",
+            group_name = f"{contest_name}__contestant__{i+startFrom}",
             contest = contest
         )
     if startFrom <= 1:

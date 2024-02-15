@@ -22,6 +22,7 @@ POST auth/users/
     {
         "type":"normal",
         "username":"admin",
+        "email":"email@gmail.com",
         "password":"password"
     }
 ```

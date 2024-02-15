@@ -48,14 +48,15 @@ class UserViewSet(ModelViewSet):
             elif typeof == "normal":
                 user_name = request.data.get("username",None)
                 password = request.data.get("password",None)
-                if user_name == None or password == None:
+                email = request.data.get("email",None)
+                if user_name == None or password == None or not email:
                     return Response(
                         {"detail":"Username and password required"},
                         status=status.HTTP_400_BAD_REQUEST
                     )
                 instance = User.objects.create(
                     username = user_name,
-                    email = f"{user_name}@email.com"
+                    email = email,
                 )
                 instance.is_superuser = True
                 instance.is_staff = True
