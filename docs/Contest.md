@@ -27,6 +27,7 @@ GET api/contest/
 * #### [listgroups](#detail-1)
 * #### [listgroups](#listgroups-1)
 * #### [listresults](#listresults-1)
+* #### [cleanCache](#listresults-1)
 <br>
 
 * ### Detail
@@ -55,6 +56,16 @@ GET api/contest/<id>?groups=True<id>
 GET api/contest/<id>?results=True
 ```
 * #### Returns the results of that contest
+<br>
+
+
+* ### cleanCache
+* #### permissions : Admin
+* #### Endpoint : 
+```
+GET api/contest/<id>?clean_cache=True
+```
+* #### used for cleaning the leaderboard cache for contest
 
 <hr>
 

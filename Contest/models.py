@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.db.models import Sum, Count,Q
 QUESTION_LEVELS = [
     ("EASY","EASY"),
     ("MEDUIM","MEDUIM"),
@@ -32,19 +33,34 @@ class Contest_Groups(models.Model):
     contest = models.ForeignKey(Contests,on_delete=models.CASCADE)
     group_name = models.CharField(max_length=40)
     user = models.ForeignKey(User,on_delete=models.CASCADE)
+    tabswitch = models.IntegerField(default=0)
 
+    def calculateResults(self):
+        results = self.contest_submissiosn_set.aggregate(
+            total_time=Sum('submit_time', filter=Q(solved=True)),
+            unsolved_count=Count('id', filter=Q(solved=False)),
+            solved_count=Count('id', filter=Q(solved=True)),
+            total_point=Sum('question__point', filter=Q(solved=True)),
+            total_submissions=Count('id')
+        )
 
-    def calculateTime(self):
-        totalTime = 0
-        for submissions in self.contest_submissiosn_set.filter(solved=True):
-            totalTime += submissions.submit_time
+        totalTime = results['total_time'] or 0
+        unsolved_count = results['unsolved_count'] or 0
+        total_point = results['total_point'] or 0
+        solved_count = results["solved_count"] or 0
+        total_submissions = results["total_submissions"] or 0
 
-        return int(totalTime) 
-    def calculatePenalty(self):
-        return PENALTY * self.contest_submissiosn_set.filter(solved=False).count()
+        return {
+            'time': int(totalTime),
+            "unsolved":unsolved_count,
+            "total":total_submissions,
+            "solved":solved_count,
+            'penalty': PENALTY * unsolved_count,
+            'point': total_point,
+            "tabswitch":self.tabswitch,
+        }
     
-    def calculateTotalPoint(self):
-        return sum([submission.question.point for submission in self.contest_submissiosn_set.filter(solved=True)])
+
     def __str__(self):
         return self.group_name
 

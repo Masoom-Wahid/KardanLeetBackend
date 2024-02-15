@@ -18,16 +18,16 @@ def sortLeaderBoarddata(data):
     sorted_data = OrderedDict(sorted(data.items(), key=lambda x: (-x[1]['point'], x[1]['time'] + x[1]["penalty"])))
     return sorted_data
 
+
+"""
+gets the leaderborad for each group of that given contest
+"""
 def getLeaderBoardData(contest):
     groups = contest.contest_groups_set.all()
     result = {}
     for group in groups:
-        result[group.group_name] = {
-            "id":group.id,
-            "point":group.calculateTotalPoint(),
-            "time":group.calculateTime(),
-            "penalty":group.calculatePenalty()
-        }
+        result[group.group_name] = group.calculateResults()
+
     return result
 
 def change_contest_name(previous_contest_name,new_contest_name):

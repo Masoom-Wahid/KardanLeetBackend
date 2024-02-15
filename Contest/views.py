@@ -36,6 +36,8 @@ from cryptography.fernet import Fernet
 from math import ceil
 from django.db.models import Q
 from django.db.models import Count, Sum, Case, When
+from django.core.cache import cache
+
 
 class CompetetionViewSet(ModelViewSet):
     queryset = Contests.objects.filter(starred=True)
@@ -236,16 +238,45 @@ class ContestViewSet(ModelViewSet):
     
     def retrieve(self, request,pk=None):
         instance = get_object_or_404(Contests,id=pk)
+        clean_cache = request.GET.get("clean_cache",False)
         show_results = request.GET.get("results",False)
         show_groups = request.GET.get("groups",False)
 
-        if show_results:
-            data = getLeaderBoardData(instance)
-            sorted_data = sortLeaderBoarddata(data)
+        if clean_cache:
+            try:
+                cache.delete("leaderboard")
+            except:
+                return Response(
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
             return Response(
-                sorted_data,
                 status=status.HTTP_200_OK
             )
+        
+        if show_results:
+            """We only want the cache for current starred and started contest not for every one of them"""
+            if instance.starred and instance.started and not instance.finished:
+                cacheExists = cache.get("leaderboard")
+                if cacheExists:
+                    sorted_data = sortLeaderBoarddata(cacheExists)
+                else:
+                    data = getLeaderBoardData(instance)
+                    sorted_data = sortLeaderBoarddata(data)
+                    cache.set("leaderboard",data,14400)
+
+                return Response(
+                    sorted_data,
+                    status=status.HTTP_200_OK
+                )
+            else:
+                data = getLeaderBoardData(instance)
+                sorted_data = sortLeaderBoarddata(data)
+                return Response(
+                    sorted_data,
+                    status=status.HTTP_200_OK
+            )
+
         elif show_groups:
             groups = instance.contest_groups_set.all()
             serializer = ContestGroupSerializer(groups,many=True)

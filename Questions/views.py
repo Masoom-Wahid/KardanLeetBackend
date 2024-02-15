@@ -59,7 +59,7 @@ class QuestionViewSet(ModelViewSet):
         # make it filter with questions
         contest_name = request.GET.get("name",None)
         page = int(request.GET.get("page",1))
-        MAXIMUM_PER_PAGE_ALLOWED = 10
+        MAXIMUM_PER_PAGE_ALLOWED = 2
         if contest_name:
             contest_instance = get_object_or_404(Contests,name=contest_name)
             instance = Contest_Question.objects.filter(contest=contest_instance).order_by("created_at")

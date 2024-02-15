@@ -40,18 +40,12 @@ class SubmitRun(RunCode):
     def updateLeaderboard(self,instance):
         leaderboard_obj = cache.get("leaderboard")
         if leaderboard_obj != None:
-            stats = {
-                "id":self.group.id,
-                "point":self.group.calculateTotalPoint(),
-                "time":self.group.calculateTime(),
-                "penalty":self.group.calculatePenalty()
-            }
-            leaderboard_obj[self.group.group_name] = stats
+            leaderboard_obj[self.group.group_name] = self.group.calculateResults()
+            cache.set("leaderboard",leaderboard_obj,14400)
         else:
             leaderboard_obj = getLeaderBoardData(self.group.contest)
             cache.set("leaderboard",leaderboard_obj,14400)
-        # channel_layer = get_channel_layer()
-        # async_to_sync(channel_layer.group_send)("leaderboard", {"type": "Leaderboard.update","update":leaderboard_obj})     
+   
 
     def writeCode(self,file):
         self.obj.code = file
@@ -61,7 +55,7 @@ class SubmitRun(RunCode):
         if status == "Solved":
             self.obj.solved = True
         self.obj.status=status
-        # scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=self.obj.id)
+        scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=self.obj.id)
         self.obj.save()
 
 
