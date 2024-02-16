@@ -21,7 +21,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -33,6 +33,12 @@ INSTALLED_APPS = [
     'Contest.apps.ContestConfig',
     'rest_framework',
 ]
+
+
+"""We Only Want Admin Pannel When it is In DEBUG MODE"""
+if DEBUG:
+    INSTALLED_APPS.insert(0,'django.contrib.admin')
+
 
 
 APPSCHEDULER_JOBS = [
