@@ -88,6 +88,7 @@ class UserViewSet(ModelViewSet):
         MAXIMUM_PER_PAGE_ALLOWED = 8
         contest_name = request.GET.get("contest",None)
         page = int(request.GET.get("page",1))
+        all_pages = request.GET.get("all",False)
         if contest_name and page:
             contest_instance = get_object_or_404(Contests,name=contest_name)
             users_count = Contest_Groups.objects.filter(contest=contest_instance).count()
@@ -96,7 +97,11 @@ class UserViewSet(ModelViewSet):
                 return Response(
                     {"detail":f"Invalid Page,Avaiable Pages {pages_count}"}
                 ) 
-            result = read_file(contest_instance.key,contest_instance.name,page-1,users_count,MAXIMUM_PER_PAGE_ALLOWED)
+            result = read_file(contest_instance.key,
+                               contest_instance.name,
+                               page-1,users_count,
+                               MAXIMUM_PER_PAGE_ALLOWED,
+                               all_pages)
             return Response(
                 {
                     "avaialable_pages":f"{pages_count}",

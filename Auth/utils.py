@@ -11,7 +11,11 @@ def generate_random_password():
     return f"{names[random.randint(0,2)]}_{token_urlsafe(6)}"
 
 
-def read_file(key,contest_name,page,users_count,MAXIMUM_PER_PAGE_ALLOWED):
+def read_file(key,
+              contest_name,
+              page,users_count,
+              MAXIMUM_PER_PAGE_ALLOWED,
+              all):
     """
     This Essentially Decrypts and Reads The Data from credentials.txt of the contest
     and then returns the users based on the page requested
@@ -40,10 +44,17 @@ def read_file(key,contest_name,page,users_count,MAXIMUM_PER_PAGE_ALLOWED):
     for i in range(len(splitted) - 1 ):
         username,password = splitted[i].split("=")
         contestants.append([username,password])
+
+    # if the user requires all of them we dont want to want to cut it by indexing them per page else the normal
+    if all:
+        for i in range(len(contestants)):
+            username,password = contestants[i]
+            hash_table[username] = password
+    else:
+        for i in range(index,last_index):
+            username,password = contestants[i]
+            hash_table[username] = password
     
-    for i in range(index,last_index):
-        username,password = contestants[i]
-        hash_table[username] = password
     return hash_table
 
 

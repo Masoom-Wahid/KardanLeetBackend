@@ -363,6 +363,7 @@ class ContestViewSet(ModelViewSet):
             if typeof == "start":
                 if action == "do":
                     if contest_instance.started == False and contest_instance.starred == True:
+                        # Check Wheter the user has upload all the testcases or not
                         if not check_question_files(contest_instance):
                             return Response(
                                 {"detail":"Make Sure You Uploaded All The Testcases for every question"},
@@ -378,16 +379,28 @@ class ContestViewSet(ModelViewSet):
                             {"detail":"The Contest Has Already Started or You Need To Star The Contest"},
                             status=status.HTTP_400_BAD_REQUEST
                         )
+                    
+                # Just Leaving these there as they will not be used in production since using them is really unstable
+                # and we are relying more on manual finishing of the contest
                 elif action == "undo" : contest_instance.started = False ; scheduler.pause_job("Contest_Listener")
                 elif action == "resume" : contest_instance.starred = True ; scheduler.resume_job("Contest_Listener")
+            
+            # Sometimes the admin does not want to Delete The Given Contest but rather restart it
+            # this just removes the listener and undo star , start and finish
             if typeof == "reset":
                 if action == "do" : 
-                    contest_instance.started = False 
+                    contest_instance.started = False
+                    contest_instance.finished = False
+                    contest_instance.starred = False
+                    for group in Contest_Groups.objects.filter(contest=contest_instance):
+                        group.user.delete()
+                        group.delete()
                     try:
-                        Contest_submissiosn.objects.filter(group__contest=contest_instance).delete()
                         scheduler.remove_job("Contest_Listener")
                     except:
                         pass
+
+            # This is For Starring and Unstarring the contest
             elif typeof == "star":
                 if action == "do":
                     if Contests.objects.filter(starred=True).exists():

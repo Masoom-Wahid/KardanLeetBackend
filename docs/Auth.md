@@ -74,6 +74,11 @@ GET auth/users/getcredentials?contest=Autumn2023&page=4
 ```
 <br>
 
+* #### NOTE :  You Can Also Get ALl of The Crednetials using this url
+```shell
+GET auth/users/getcredentials?contest=Autumn2023&all=True
+```
+* #### This Will Return all the users of that contest
 * #### requires : contest and page
 * #### contest is mandatory but page is set default to 1
 * #### it should return smth like this
