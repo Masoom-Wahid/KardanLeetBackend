@@ -364,25 +364,26 @@ class ContestViewSet(ModelViewSet):
     def setQuestions(self,request):
         contest_name = request.data.get("name",None)
         questions_ids = request.data.get("ids",None)
-        if questions_ids:
-            conetst_instance = get_object_or_404(Contests,name=contest_name)
-            ids = questions_ids.split(",")
-            questions = Contest_Question.objects.filter(id__in=ids)
-            if any(question is None for question in questions):
-                return Response(
-                    {"detail":"Invalid ID"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            else:
-                conetst_instance.contest_question_set.set(ids)
-                conetst_instance.save()
-                return Response(
-                    status=status.HTTP_204_NO_CONTENT
-                )
-        else:
+        conetst_instance = get_object_or_404(Contests,name=contest_name)
+        if not questions_ids:
+            conetst_instance.contest_question_set.set = set()
+            conetst_instance.save()
             return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
+        ids = questions_ids.split(",")
+        questions = Contest_Question.objects.filter(id__in=ids)
+        if any(question is None for question in questions):
+            return Response(
+                {"detail":"Invalid ID"},
                 status=status.HTTP_400_BAD_REQUEST
-                )
+            )
+        else:
+            conetst_instance.contest_question_set.set(ids)
+            conetst_instance.save()
+            return Response(
+                status=status.HTTP_204_NO_CONTENT
+            )
 
     @action(detail=False,methods=["POST"])
     def actions(self,request):
