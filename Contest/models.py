@@ -65,12 +65,6 @@ class Contest_Groups(models.Model):
     def __str__(self):
         return self.group_name
 
-class Contestants(models.Model):
-    name = models.CharField(max_length=40)
-    group = models.ForeignKey(Contest_Groups,on_delete=models.CASCADE)
-
-    def __str__(self):
-        return str(self.name)
     
 class Contest_Question(models.Model):
     contest = models.ManyToManyField(Contests)

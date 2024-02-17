@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
-from .serializers import (ContestantsSerializer,
+from .serializers import (
                           ContestSerializer,
                           ContestGroupSerializer,
                           ContestQuestionSerializer,
@@ -12,7 +12,7 @@ from rest_framework import status
 from Questions.serializers import (SampleTestCasesExampleSerializer
                                 ,ConstraintsSerializer
                                 ,ShowSampleTestCasesExampleSerializer)
-from .models import Contests,Contest_Groups,Contestants,Contest_Question,Contest_submissiosn
+from .models import Contests,Contest_Groups,Contest_Question,Contest_submissiosn
 from rest_framework.decorators import action
 from .utils import (create_folder_for_contest
                     ,delete_folder_for_contest
@@ -623,37 +623,37 @@ class ContestViewSet(ModelViewSet):
     #         status=status.HTTP_204_NO_CONTENT
     #     )
     
-    @action(detail=False,methods=["GET","POST","DELETE"])
-    def contestants(self,request):
-        method = request.method
-        if method == "GET":
-            group = get_object_or_404(Contest_Groups,id=request.GET.get("id",None))
-            instance = Contestants.objects.filter(group=group)
-            serializer = ContestantsSerializer(instance,many=True)
-            return Response(
-                serializer.data,
-                status=status.HTTP_200_OK
-            )
-        if method == "POST":
-            name = request.data.get("name",None)
-            if not name:
-                return Response(
-                        {"detail":"name required"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
-            else:
-                group = get_object_or_404(Contest_Groups,id=request.data.get("id",None))
-                contest_instance = Contestants.objects.create(
-                    group = group,
-                    name=name
-                )
-                serializer = ContestantsSerializer(contest_instance,many=False)
-                return Response(
-                    serializer.data,
-                    status=status.HTTP_200_OK
-                )
-        if method == "DELETE":
-            instance = get_object_or_404(Contestants,id=request.GET.get("id",None))
-            instance.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+    # @action(detail=False,methods=["GET","POST","DELETE"])
+    # def contestants(self,request):
+    #     method = request.method
+    #     if method == "GET":
+    #         group = get_object_or_404(Contest_Groups,id=request.GET.get("id",None))
+    #         instance = Contestants.objects.filter(group=group)
+    #         serializer = ContestantsSerializer(instance,many=True)
+    #         return Response(
+    #             serializer.data,
+    #             status=status.HTTP_200_OK
+    #         )
+    #     if method == "POST":
+    #         name = request.data.get("name",None)
+    #         if not name:
+    #             return Response(
+    #                     {"detail":"name required"},
+    #                     status=status.HTTP_400_BAD_REQUEST
+    #                 )
+    #         else:
+    #             group = get_object_or_404(Contest_Groups,id=request.data.get("id",None))
+    #             contest_instance = Contestants.objects.create(
+    #                 group = group,
+    #                 name=name
+    #             )
+    #             serializer = ContestantsSerializer(contest_instance,many=False)
+    #             return Response(
+    #                 serializer.data,
+    #                 status=status.HTTP_200_OK
+    #             )
+    #     if method == "DELETE":
+    #         instance = get_object_or_404(Contestants,id=request.GET.get("id",None))
+    #         instance.delete()
+    #         return Response(status=status.HTTP_204_NO_CONTENT)
     

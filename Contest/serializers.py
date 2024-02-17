@@ -1,4 +1,4 @@
-from .models import Contestants,Contests,Contest_Groups,Contest_Question,Contest_submissiosn
+from .models import Contests,Contest_Groups,Contest_Question,Contest_submissiosn
 from rest_framework import serializers
 from datetime import datetime
 
@@ -70,12 +70,3 @@ class ContestQuestionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Contest_Question
         fields = ["id","title","lvl","time_limit","point","description","num_of_test_cases"]
-
-class ContestantsSerializer(serializers.ModelSerializer):
-    group = serializers.SerializerMethodField()
-    class Meta:
-        model = Contestants
-        fields = ["id","name","group"]
-
-    def get_group(self,obj):
-        return obj.group.group_name

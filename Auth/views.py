@@ -2,10 +2,9 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from django.contrib.auth.models import User
 from .serializers import UserSerializer,MyTokenObtainPairSerializer
-from Contest.serializers import ContestantsSerializer
 from .permissions import IsSuperUserOrIsStaffUser
 from rest_framework import status
-from Contest.models import Contests,Contest_Groups,Contestants
+from Contest.models import Contests,Contest_Groups
 from rest_framework.permissions import AllowAny
 from .utils import generate_user_for_contest,read_file
 from rest_framework.decorators import action
