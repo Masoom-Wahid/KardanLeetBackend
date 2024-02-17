@@ -38,22 +38,31 @@ def read_file(key,
     pages
     """
     data = str(decrypt_file(key,previous_encrypted_data))[2:-1]
-    contestants = []
+    usernames = [] ; passwords = []
     splitted = data.split(",")
     hash_table = {}
     for i in range(len(splitted) - 1 ):
-        username,password = splitted[i].split("=")
-        contestants.append([username,password])
+        user_name,pass_word = splitted[i].split("=")
+        usernames.append(user_name)
+        passwords.append(pass_word)
+    
+
 
     # if the user requires all of them we dont want to want to cut it by indexing them per page else the normal
     if all:
-        for i in range(len(contestants)):
-            username,password = contestants[i]
-            hash_table[username] = password
+        groups = Contest_Groups.objects.filter(user__username__in=usernames)
+        for i in range(len(usernames)):
+            hash_table[usernames[i]] = {
+                "password":passwords[i],
+                "alias":str(groups.get(user__username=usernames[i]).group_name)
+            }
     else:
+        groups = Contest_Groups.objects.filter(user__username__in=usernames[index:last_index])
         for i in range(index,last_index):
-            username,password = contestants[i]
-            hash_table[username] = password
+            hash_table[usernames[i]] = {
+                "password":passwords[i],
+                "alias":str(groups.get(user__username=usernames[i]).group_name)
+            }
     
     return hash_table
 
