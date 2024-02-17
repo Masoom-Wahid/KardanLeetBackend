@@ -1,6 +1,6 @@
 from .models import Contestants,Contests,Contest_Groups,Contest_Question,Contest_submissiosn
 from rest_framework import serializers
-
+from datetime import datetime
 
 
 class CompetitionQuestionSerializer(serializers.ModelSerializer):
@@ -39,10 +39,14 @@ class ContestGroupSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ContestSerializer(serializers.ModelSerializer):
+    created_at = serializers.SerializerMethodField()
     class Meta:
         model = Contests
-        fields = ["id","name","duration","starred","started","finished"]
+        fields = ["id","name","duration","starred","started","finished","created_at"]
 
+    def get_created_at(self,obj):
+        datetime_obj = datetime.strptime(str(obj.created_at), '%Y-%m-%d %H:%M:%S.%f%z')
+        return datetime_obj.date()
 
 
 class ContestSubmissionSerializer(serializers.ModelSerializer):

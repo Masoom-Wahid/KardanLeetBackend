@@ -37,6 +37,7 @@ from math import ceil
 from django.db.models import Q
 from django.db.models import Count, Sum, Case, When
 from django.core.cache import cache
+import datetime
 
 
 class CompetetionViewSet(ModelViewSet):
@@ -250,6 +251,7 @@ class ContestViewSet(ModelViewSet):
         clean_cache = request.GET.get("clean_cache",False)
         show_results = request.GET.get("results",False)
         show_groups = request.GET.get("groups",False)
+        show_langs = request.GET.get("lang",False)
 
         if clean_cache:
             try:
@@ -264,6 +266,18 @@ class ContestViewSet(ModelViewSet):
             )
         
         if show_results:
+            if show_langs:
+                results = instance.contest_groups_set.aggregate(
+                    python=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='python')),
+                    java=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='java')),
+                    cpp=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='cpp')),
+                    php=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='php')),
+                    rust=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='rust')),
+                    js=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='js')),
+                    ts=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='ts')),
+                    csharp=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='csharp')),
+                    c=Count('contest_submissiosn', filter=Q(contest_submissiosn__lang='c')),
+                )
             """We only want the cache for current starred and started contest not for every one of them"""
             if instance.starred and instance.started and not instance.finished:
                 cacheExists = cache.get("leaderboard")
@@ -273,16 +287,23 @@ class ContestViewSet(ModelViewSet):
                     data = getLeaderBoardData(instance)
                     sorted_data = sortLeaderBoarddata(data)
                     cache.set("leaderboard",data,14400)
-
+                elapsed =  instance.duration - (timezone.now() - instance.started_at ) 
                 return Response(
-                    sorted_data,
+                    {
+                        "time":int(elapsed.total_seconds()),
+                        "data":sorted_data
+                    },
                     status=status.HTTP_200_OK
                 )
             else:
                 data = getLeaderBoardData(instance)
                 sorted_data = sortLeaderBoarddata(data)
                 return Response(
-                    sorted_data,
+                    {
+                        "time":"",
+                        "lang_stats":results if show_langs else "",
+                        "data":sorted_data
+                    },
                     status=status.HTTP_200_OK
             )
 
@@ -327,6 +348,17 @@ class ContestViewSet(ModelViewSet):
         deleteFiles()
         starred_contest.save()
 
+
+
+    @action(detail=False,methods=["GET"])
+    def getLastContest(self,request):
+        """Used For Admin Page"""
+        contests = Contests.objects.all().order_by("-created_at")[:3]
+        serializer = ContestSerializer(contests,many=True)
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK
+        )
 
     @action(detail=False,methods=["POST"])
     def setQuestions(self,request):

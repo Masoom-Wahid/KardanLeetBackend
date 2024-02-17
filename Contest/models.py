@@ -22,6 +22,7 @@ class Contests(models.Model):
     starred = models.BooleanField(default=False)
     key = models.TextField(blank=False,null=False)
     finished = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def calculateTotalPoints(self):
         return sum([question.point for question in self.contest_question_set.all()])
