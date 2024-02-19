@@ -98,8 +98,9 @@ class QuestionViewSet(ModelViewSet):
 
 
     def create(self,request,*args,**kwargs):
-        amountOfTestCases , points = request.data.get("num_of_test_cases",0) , request.data.get("point",-1)
+        amountOfTestCases , points = int(request.data.get("num_of_test_cases",0)) , int(request.data.get("point",-1))
         if amountOfTestCases < 3 or points <= 0 : return Response({"detail":"Testcases should be above 3"},status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = ContestQuestionsCreatorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
@@ -111,8 +112,9 @@ class QuestionViewSet(ModelViewSet):
     def update(self, request,pk=None):
         question = get_object_or_404(Contest_Question,id=pk)
         
-        amountOfTestCases , points = request.data.get("num_of_test_cases",0) , request.data.get("point",-1)
-        if int(amountOfTestCases) < 3 or int(points) <= 0 : return Response({"detail":"Testcases should be above 3"},status=status.HTTP_400_BAD_REQUEST)
+        amountOfTestCases , points = int(request.data.get("num_of_test_cases",0)) , int(request.data.get("point",-1))
+        if amountOfTestCases < 3 or points <= 0 : return Response({"detail":"Testcases should be above 3"},status=status.HTTP_400_BAD_REQUEST)
+        
         serializer = ContestQuestionsSerializer(instance=question,data=request.data)
         serializer.is_valid(raise_exception=True)
         # Just To Make Sure That Everything is Updated and cache still not holding the previous data
