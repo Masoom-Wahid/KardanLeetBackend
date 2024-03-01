@@ -96,7 +96,7 @@ class RunCode:
             },
             "rust":{
                 "name":filename[:-3],
-                "exec_code":["rustc",filename]
+                "exec_code":["rustc","--allow","warnings",filename]
             },
             "typescript":{
                 "name":filename[0:-2] + "js",
