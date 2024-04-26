@@ -8,6 +8,7 @@ from django.core.cache import cache
 # from asgiref.sync import async_to_sync
 from Contest.tasks import scheduler
 from ..utils import getLeaderBoardData,sortLeaderBoarddata
+import uuid
 
 
 class SubmitRun(RunCode):
@@ -15,7 +16,7 @@ class SubmitRun(RunCode):
         super().__init__(group,question,contest,language,file)
         self.LeaderBoardDealy = timezone.now() + timedelta(seconds=2)
         self.obj = Contest_submissiosn.objects.create(
-            id = self.makeId(),
+            id = uuid.uuid4(),
             group = group,
             question = question,
             lang=language,    
@@ -32,10 +33,12 @@ class SubmitRun(RunCode):
     getsubmitTime = lambda self :   (timezone.now() - self.group.contest.started_at).total_seconds()
 
     def makeId(self):
-        token = secrets.token_urlsafe(6)
-        while Contest_submissiosn.objects.filter(id=token).exists():
-            token = secrets.token_urlsafe(6)
-        return token
+        # token = secrets.token_urlsafe(6)
+        # while Contest_submissiosn.objects.filter(id=token).exists():
+        #     token = secrets.token_urlsafe(6)
+        # return token
+        return uuid.uuid4()
+
 
     def updateLeaderboard(self,instance):
         leaderboard_obj = cache.get("leaderboard")
