@@ -2,7 +2,7 @@
 
 PYTHON := python
 VENV := venv
-REQUIREMENTS := requirments_local.txt
+REQUIREMENTS := requirements.txt
 OS := $(shell uname -s)
 
 

@@ -19,10 +19,10 @@ WORKDIR /usr/src/app
 
 FROM base AS final
 # Copy the requirements file
-COPY requirments_local.txt ./
+COPY requirements.txt ./
 
 # Install Python dependencies
-RUN pip install -r requirments_local.txt
+RUN pip install -r requirements.txt
 
 # Copy the application code
 COPY . .
