@@ -2,6 +2,7 @@ FROM python:3 AS Base
 
 # Install system dependencies
 RUN pip install --upgrade pip
+RUN pip install cffi --upgrade
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gunicorn
 
