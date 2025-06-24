@@ -1,4 +1,7 @@
-FROM python:3 AS Base
+FROM python:3.11-slim-bookworm AS base
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
 # Install system dependencies
 RUN pip install --upgrade pip
