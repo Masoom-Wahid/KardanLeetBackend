@@ -58,7 +58,7 @@ class SubmitRun(RunCode):
         if status == "Solved":
             self.obj.solved = True
         self.obj.status=status
-        scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=self.obj.id)
+        scheduler.add_job(self.updateLeaderboard, 'date',[self.obj], run_date=self.LeaderBoardDealy,id=str(self.obj.id))
         self.obj.save()
 
 
