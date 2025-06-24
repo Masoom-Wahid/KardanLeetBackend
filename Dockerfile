@@ -3,6 +3,10 @@ FROM python:3 AS Base
 # Install system dependencies
 RUN pip install --upgrade pip
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    python3-dev \
     gunicorn \
     php \
     nodejs \
@@ -12,20 +16,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     mono-complete \
     && rm -rf /var/lib/apt/lists/*
 
+
+RUN pip install --no-cache-dir --upgrade pip setuptools
+
 RUN npm install -g typescript
 
-# Set the working directory
 WORKDIR /usr/src/app
 
 FROM base AS final
-# Copy the requirements file
+
 COPY requirements.txt ./
 
-# Install Python dependencies
 RUN pip install -r requirements.txt
 
-# Copy the application code
 COPY . .
 
-# Set the command to start the server
 CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "13", "KardanLeet.wsgi:application"]
